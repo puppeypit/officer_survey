@@ -2214,9 +2214,9 @@
         document.getElementById('staffDetailsContainer').innerHTML = '';
         document.getElementById('allCommentsContainer').innerHTML = '';
 
-        google.script.run
-          .withSuccessHandler(onDataLoaded)
-          .withFailureHandler(function (err) {
+        fetchAPI('getDashboardData', { token: sessionToken, dateFilter: currentDateFilter })
+          .then(onDataLoaded)
+          .catch(function (err) {
             window.pendingPrint = false;
             document.getElementById('loading').innerHTML = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
             document.getElementById('staffDetailsContainer').innerHTML = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
@@ -2226,8 +2226,7 @@
               text: (err && err.message) ? err.message : String(err),
               confirmButtonColor: '#ff8da1'
             });
-          })
-          .getDashboardData(sessionToken, currentDateFilter);
+          });
       }
 
       function openPrintDialog() {
@@ -2512,8 +2511,8 @@
       function preloadAdminStaffList() {
         if (isAdminStaffListLoaded || isAdminStaffListLoading) return;
         isAdminStaffListLoading = true;
-        google.script.run
-          .withSuccessHandler(function (res) {
+        fetchAPI('getStaffListForAdmin', { token: sessionToken })
+          .then(function (res) {
             isAdminStaffListLoading = false;
             if (res && res.success) {
               adminStaffData = res.staffList || [];
@@ -2525,10 +2524,9 @@
               }
             }
           })
-          .withFailureHandler(function (err) {
+          .catch(function (err) {
             isAdminStaffListLoading = false;
-          })
-          .getStaffListForAdmin(sessionToken);
+          });
       }
 
       function showAdminView() {
@@ -2692,8 +2690,8 @@
         const needsDelete = isImageDeleted && (!fileInput.files || !fileInput.files[0]);
 
         // บันทึกชื่อ + ฝ่าย
-        google.script.run
-          .withSuccessHandler(function (res) {
+        fetchAPI('updateStaffData', { token: sessionToken, staffId: staffId, newName: name, department: dept, deleteImage: needsDelete })
+          .then(function (res) {
             if (res && res.authRequired) {
               btn.innerHTML = '<i class="fas fa-save"></i> บันทึก';
               btn.disabled = false;
@@ -2724,12 +2722,11 @@
               Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message, confirmButtonColor: '#667eea' });
             }
           })
-          .withFailureHandler(function (err) {
+          .catch(function (err) {
             btn.innerHTML = '<i class="fas fa-save"></i> บันทึก';
             btn.disabled = false;
             Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.message, confirmButtonColor: '#667eea' });
-          })
-          .updateStaffData(sessionToken, staffId, name, dept, needsDelete);
+          });
       }
 
       function uploadImage(staffId, file, btn) {
@@ -2744,8 +2741,8 @@
         const reader = new FileReader();
         reader.onload = function (e) {
           const base64 = e.target.result;
-          google.script.run
-            .withSuccessHandler(function (res) {
+          fetchAPI('uploadStaffImage', { token: sessionToken, staffId: staffId, base64Data: base64, fileName: file.name })
+            .then(function (res) {
               btn.innerHTML = '<i class="fas fa-save"></i> บันทึก';
               btn.disabled = false;
               if (res && res.authRequired) { handleAuthExpired(res.message); return; }
@@ -2760,12 +2757,11 @@
                 Swal.fire({ icon: 'warning', title: 'บันทึกข้อมูลแล้ว แต่รูปภาพมีปัญหา', text: res.message, confirmButtonColor: '#667eea' });
               }
             })
-            .withFailureHandler(function (err) {
+            .catch(function (err) {
               btn.innerHTML = '<i class="fas fa-save"></i> บันทึก';
               btn.disabled = false;
               Swal.fire({ icon: 'warning', title: 'บันทึกข้อมูลแล้ว แต่อัปโหลดรูปไม่สำเร็จ', text: err.message, confirmButtonColor: '#667eea' });
-            })
-            .uploadStaffImage(sessionToken, staffId, base64, file.name);
+            });
         };
         reader.readAsDataURL(file);
       }
