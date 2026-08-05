@@ -14,8 +14,17 @@
   <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+
+  <!-- Flatpickr for Date Picker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://npmcdn.com/flatpickr/dist/l10n/th.js"></script>
+
   <!-- SweetAlert2 สำหรับการแจ้งเตือน (จำเป็น: โค้ดด้านล่างเรียกใช้ Swal.fire) -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- html2pdf.js สำหรับสร้างไฟล์ PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <!-- รวม CSS หลักของระบบ -->
   <style>
@@ -1079,7 +1088,7 @@
     }
 
     @page {
-      size: A4 portrait;
+      size: A4 landscape;
       margin: 10mm;
     }
 
@@ -1096,8 +1105,23 @@
       .container,
       .admin-card,
       .modern-bg,
-      .lightbox {
+      .lightbox,
+      .dashboard-container {
         display: none !important;
+      }
+
+      #hiddenReportWrapper {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        visibility: visible !important;
+        background: white;
+      }
+
+      #hiddenReportWrapper * {
+        visibility: visible;
       }
 
       #printSheet {
@@ -1225,11 +1249,73 @@
       transform: translateY(-2px) scale(1.02);
       box-shadow: 0 6px 15px rgba(14, 165, 233, 0.5);
     }
+
+    /* PDF Export Override Styles */
+    body.pdf-export-mode #dashboardContent {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 10px !important;
+      background: white !important;
+    }
+
+    body.pdf-export-mode .dashboard-container {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    body.pdf-export-mode .staff-card,
+    body.pdf-export-mode .glass-panel,
+    body.pdf-export-mode .stat-card {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      box-shadow: none !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+
+    body.pdf-export-mode .carousel-nav-btn,
+    body.pdf-export-mode [id^="page-scroll-"] {
+      display: none !important;
+    }
+
+    body.pdf-export-mode div[id^="scroll-"] {
+      display: block !important;
+      overflow: visible !important;
+      height: auto !important;
+    }
+
+    body.pdf-export-mode div[id^="scroll-"]>div {
+      display: block !important;
+      margin-bottom: 12px !important;
+    }
+
+    .swal-wide {
+      width: auto !important;
+      min-width: 400px;
+      max-width: 95vw !important;
+    }
   </style>
 
 
   <style>
     /* ปรับแต่งเพิ่มเติมเฉพาะหน้า Dashboard */
+    .staff-list-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .staff-list-container::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 10px;
+    }
+
+    .staff-list-container::-webkit-scrollbar-thumb {
+      background: #64748b;
+      border-radius: 10px;
+    }
+
+    .staff-list-container::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
     .dashboard-container {
       max-width: 1400px;
       margin: 2rem auto;
@@ -1273,15 +1359,15 @@
     .login-icon {
       width: 75px;
       height: 75px;
-      background: #ffe4e1;
-      color: #ff69b4;
+      background: #dbeafe;
+      color: #3b82f6;
       border-radius: 40%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 2.2rem;
       margin: 0 auto 1.2rem auto;
-      box-shadow: 0 8px 15px rgba(255, 105, 180, 0.15);
+      box-shadow: 0 8px 15px rgba(59, 130, 246, 0.15);
       transform: rotate(-10deg);
       transition: all 0.3s ease;
     }
@@ -1318,6 +1404,8 @@
 
     .premium-input {
       padding-left: 50px !important;
+      padding-right: 50px !important;
+      text-align: center;
       height: 55px;
       border-radius: 20px;
       border: 2px solid #f3f4f6;
@@ -1334,12 +1422,13 @@
     .premium-input::placeholder {
       color: #a1a1aa;
       font-weight: 400;
+      text-align: center;
     }
 
     .premium-input:focus {
       background: #ffffff;
-      border-color: #ffb6c1;
-      box-shadow: 0 0 0 4px rgba(255, 182, 193, 0.25);
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
       outline: none;
     }
 
@@ -1348,7 +1437,7 @@
       margin-top: 1rem;
       height: 55px;
       border-radius: 20px;
-      background: #ff8da1;
+      background: #3b82f6;
       font-size: 1.1rem;
       font-weight: 600;
       letter-spacing: 0.5px;
@@ -1356,7 +1445,7 @@
       justify-content: center;
       align-items: center;
       gap: 10px;
-      box-shadow: 0 8px 20px rgba(255, 141, 161, 0.3);
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
       border: none;
       color: white;
       cursor: pointer;
@@ -1366,8 +1455,8 @@
 
     .premium-btn:hover {
       transform: translateY(-3px);
-      background: #ff758f;
-      box-shadow: 0 12px 25px rgba(255, 141, 161, 0.4);
+      background: #2563eb;
+      box-shadow: 0 12px 25px rgba(59, 130, 246, 0.4);
     }
 
     .error-msg {
@@ -1380,6 +1469,22 @@
       display: none;
       font-size: 0.9rem;
       border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    @keyframes smoothEnter {
+      0% {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .animate-enter {
+      animation: smoothEnter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
 
     #dashboardView {
@@ -1414,8 +1519,8 @@
       background: #ffffff;
       border-radius: 35px;
       padding: 2.5rem 2rem;
-      box-shadow: 0 20px 40px rgba(255, 182, 193, 0.25), 0 5px 15px rgba(0, 0, 0, 0.02);
-      border: 3px solid #fff0f5;
+      box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15), 0 5px 15px rgba(0, 0, 0, 0.02);
+      border: 3px solid #eff6ff;
       height: 100%;
       box-sizing: border-box;
       display: flex;
@@ -1453,12 +1558,12 @@
     .stat-box {
       flex: 1;
       min-width: 120px;
-      background: #fffafa;
+      background: #ffffff;
       border-radius: 25px;
       padding: 1.5rem 1rem;
       text-align: center;
-      box-shadow: 0 10px 20px rgba(255, 182, 193, 0.15);
-      border: 2px solid #fff0f5;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.1);
+      border: 2px solid #eff6ff;
       transition: all 0.3s ease;
     }
 
@@ -1466,24 +1571,52 @@
       transform: translateY(-5px);
     }
 
+    .stat-box.stat-total {
+      border-color: #3b82f6;
+    }
+
     .stat-box.stat-total:hover {
-      border-color: #ff8da1;
-      box-shadow: 0 15px 25px rgba(255, 141, 161, 0.3);
+      box-shadow: 0 15px 25px rgba(37, 99, 235, 0.2);
+    }
+
+    .stat-box.stat-excellent {
+      border-color: #4CAF50;
     }
 
     .stat-box.stat-excellent:hover {
-      border-color: #4CAF50;
       box-shadow: 0 15px 25px rgba(76, 175, 80, 0.3);
     }
 
-    .stat-box.stat-good:hover {
+    .stat-box.stat-good {
       border-color: #FFC107;
+    }
+
+    .stat-box.stat-good:hover {
       box-shadow: 0 15px 25px rgba(255, 193, 7, 0.3);
     }
 
-    .stat-box.stat-poor:hover {
+    .stat-box.stat-poor {
       border-color: #F44336;
+    }
+
+    .stat-box.stat-poor:hover {
       box-shadow: 0 15px 25px rgba(244, 67, 54, 0.3);
+    }
+
+    .logout-btn {
+      margin-left: 15px;
+      color: #ef4444;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      background: #fef2f2;
+      color: #dc2626;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
     }
 
     .stat-value {
@@ -1499,8 +1632,8 @@
     }
 
     .btn-refresh {
-      background: #ffe4e1;
-      color: #ff69b4;
+      background: #dbeafe;
+      color: #2563eb;
       border: none;
       padding: 0.6rem 1.2rem;
       border-radius: 20px;
@@ -1511,14 +1644,14 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      box-shadow: 0 5px 15px rgba(255, 105, 180, 0.15);
+      box-shadow: 0 5px 15px rgba(37, 99, 235, 0.15);
     }
 
     .btn-refresh:hover {
-      background: #ff8da1;
-      color: white;
+      background: #bfdbfe;
+      color: #1d4ed8;
       transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(255, 141, 161, 0.3);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
     }
 
     /* -- CSS สำหรับการ์ดรายบุคคล -- */
@@ -1532,17 +1665,17 @@
       background: #fff;
       border-radius: 20px;
       padding: 1.2rem;
-      box-shadow: 0 5px 15px rgba(255, 182, 193, 0.1);
-      border: 2px solid #fff0f5;
+      box-shadow: 0 5px 15px rgba(37, 99, 235, 0.1);
+      border: 2px solid #eff6ff;
       display: flex;
       flex-direction: column;
       transition: all 0.3s ease;
     }
 
     .staff-card:hover {
-      border-color: #ffb6c1 !important;
-      /* เปลี่ยนกรอบเป็นสีชมพูพาสเทลเมื่อชี้ */
-      box-shadow: 0 8px 25px rgba(255, 182, 193, 0.3) !important;
+      border-color: #60a5fa !important;
+      /* เปลี่ยนกรอบเมื่อชี้ */
+      box-shadow: 0 8px 25px rgba(37, 99, 235, 0.2) !important;
       /* เพิ่มเงาให้ดูเด้งขึ้น */
       transform: none !important;
       /* ยกเลิกการขยายขนาดหรือเด้งขึ้น เพื่อไม่ให้ล้นขอบ */
@@ -1610,7 +1743,7 @@
 
     .loading-text {
       font-size: 1.1rem;
-      color: #ff8da1;
+      color: #3b82f6;
       margin-top: 15px;
       font-weight: 600;
       animation: pulse 1.5s infinite;
@@ -1644,10 +1777,10 @@
       width: 50px;
       height: 50px;
       border-radius: 50%;
-      background-color: #ffb6c1;
+      background-color: #3b82f6;
       color: white;
       border: none;
-      box-shadow: 0 4px 15px rgba(255, 182, 193, 0.6);
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.6);
       font-size: 1.2rem;
       cursor: pointer;
       display: flex;
@@ -1657,32 +1790,32 @@
     }
 
     .scroll-btn:hover {
-      background-color: #ff8da1;
+      background-color: #2563eb;
       transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(255, 182, 193, 0.8);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.8);
     }
 
     /* ปุ่มเลื่อนซ้าย-ขวา ในกล่องคอมเมนต์ */
     .carousel-nav-btn {
       background: white;
-      border: 1px solid #ffe4e1;
+      border: 1px solid #dbeafe;
       border-radius: 50%;
       width: 40px;
       height: 40px;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(255, 182, 193, 0.3);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #ffb6c1;
+      color: #3b82f6;
       transition: all 0.3s ease;
     }
 
     .carousel-nav-btn:hover {
-      background: #ffb6c1;
+      background: #3b82f6;
       color: white;
       transform: scale(1.1);
-      box-shadow: 0 4px 12px rgba(255, 182, 193, 0.5);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
     }
 
     .comment-author {
@@ -1697,12 +1830,12 @@
     }
 
     .comment-list::-webkit-scrollbar-track {
-      background: #fff0f5;
+      background: #eff6ff;
       border-radius: 10px;
     }
 
     .comment-list::-webkit-scrollbar-thumb {
-      background: #ffb6c1;
+      background: #93c5fd;
       border-radius: 10px;
     }
 
@@ -1711,6 +1844,17 @@
       color: var(--text-secondary);
       font-size: 1.1rem;
       padding: 2rem;
+    }
+
+    .premium-input:not(:placeholder-shown) {
+      text-align: center;
+      padding-right: 50px;
+    }
+
+    .swal-wide {
+      width: auto !important;
+      min-width: 400px;
+      max-width: 95vw !important;
     }
   </style>
 </head>
@@ -1738,11 +1882,10 @@
     <!-- หน้าจอ Login -->
     <div id="loginView" class="login-card">
       <div class="login-header">
-        <div class="login-icon">
-          <i class="fas fa-heart"></i>
-        </div>
-        <h2>Welcome Back ✨</h2>
-        <p>ยินดีต้อนรับเข้าสู่ระบบสรุปผลประเมิน</p>
+        <img src="https://i.ibb.co/WpF86bhw/Logo-50-Year.png" alt="Logo"
+          style="width: 120px; height: 120px; object-fit: contain; margin-bottom: 15px;">
+        <h2>Welcome Back</h2>
+        <p>ยินดีต้อนรับเข้าสู่หน้า Dashboard สรุปผลประเมิน</p>
       </div>
 
       <div class="form-group" style="margin-bottom: 1.2rem;">
@@ -1752,10 +1895,22 @@
         </div>
       </div>
       <div class="form-group" style="margin-bottom: 1.5rem;">
-        <div class="input-with-icon">
+        <div class="input-with-icon" style="position: relative;">
           <i class="fas fa-lock"></i>
-          <input type="password" id="passwordInput" class="premium-input" placeholder="รหัสผ่าน">
+          <input type="password" id="passwordInput" class="premium-input" placeholder="รหัสผ่าน"
+            style="padding-right: 40px;">
+          <i class="fas fa-eye" id="togglePassword" onclick="togglePasswordVisibility()"
+            style="position: absolute; right: 15px; left: auto !important; top: 50%; transform: translateY(-50%); cursor: pointer; color: #a1a1aa; font-size: 1.1rem; transition: color 0.3s;"></i>
         </div>
+      </div>
+
+      <div
+        style="display: flex; justify-content: center; align-items: center; margin-bottom: 1.5rem; font-size: 0.9rem; color: #64748b; padding: 0 5px;">
+        <label style="display: flex; align-items: center; cursor: pointer;">
+          <input type="checkbox" id="rememberMe"
+            style="margin-right: 8px; cursor: pointer; width: 16px; height: 16px; accent-color: #3b82f6;">
+          จดจำรหัสผ่าน
+        </label>
       </div>
 
       <button id="btnLogin" class="premium-btn" onclick="doLogin()">
@@ -1771,9 +1926,53 @@
       <div
         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
         <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <select id="dateFilterSelect"
+            onchange="if(this.value==='custom'){ document.getElementById('customDateFilterContainer').style.display='flex'; } else { document.getElementById('customDateFilterContainer').style.display='none'; currentDateFilter=this.value; loadDashboardData(); }"
+            style="padding: 0.5rem; border-radius: 20px; border: 2px solid #dbeafe; outline: none; font-family: 'Kanit', sans-serif; color: #4a4a4a; background: #fff; cursor: pointer; box-shadow: 0 2px 8px rgba(37,99,235,0.05);">
+            <option value="all">ทั้งหมด (All Time)</option>
+            <option value="today">วันนี้ (Today)</option>
+            <option value="this_month">เดือนนี้ (This Month)</option>
+            <option value="custom">📅 กำหนดช่วงเวลาเอง...</option>
+          </select>
+          <div id="customDateFilterContainer"
+            style="display:none; align-items: center; gap: 10px; flex-wrap: wrap; background: #f0f9ff; padding: 6px 15px; border-radius: 25px; border: 1px dashed #7dd3fc; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 0.9rem; color: #0284c7; font-weight: 500;"><i class="fas fa-calendar-alt"></i>
+                เริ่ม:</span>
+              <input type="date" id="customDateStart"
+                style="padding: 0.4rem 0.8rem; border-radius: 15px; border: 1px solid #bae6fd; outline: none; font-family: 'Kanit', sans-serif; color: #4a4a4a; background: #fff; cursor: pointer; font-size: 0.9rem;">
+            </div>
+            <span style="color: #38bdf8; font-weight: bold; font-size: 0.9rem;"><i
+                class="fas fa-arrow-right"></i></span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 0.9rem; color: #0284c7; font-weight: 500;"><i class="fas fa-calendar-check"></i>
+                ถึง:</span>
+              <input type="date" id="customDateEnd"
+                style="padding: 0.4rem 0.8rem; border-radius: 15px; border: 1px solid #bae6fd; outline: none; font-family: 'Kanit', sans-serif; color: #4a4a4a; background: #fff; cursor: pointer; font-size: 0.9rem;">
+            </div>
+            <button class="btn-refresh" onclick="applyCustomDate()"
+              style="padding: 0.4rem 1.2rem; font-size: 0.9rem; background: linear-gradient(135deg, #0ea5e9, #2563eb); color: white; border-radius: 15px; box-shadow: 0 2px 5px rgba(14, 165, 233, 0.3);">
+              ตกลง
+            </button>
+          </div>
           <button class="btn-refresh" onclick="loadDashboardData()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
             <i class="fas fa-sync-alt"></i> อัปเดตข้อมูล
           </button>
+          <script>
+            // TODO: ใส่ URL ของ Web App ที่ได้จาก Google Apps Script ที่นี่
+            const GAS_WEB_APP_URL = "";
+
+            function applyCustomDate() {
+              const start = document.getElementById('customDateStart').value;
+              const end = document.getElementById('customDateEnd').value;
+              if (!start || !end) {
+                Swal.fire({ icon: 'warning', title: 'กรุณาระบุวันที่ให้ครบ' });
+                return;
+              }
+              currentDateFilter = start + '_' + end;
+              loadDashboardData();
+            }
+          </script>
 
           <button class="btn-refresh" onclick="openPrintDialog()"
             style="padding: 0.5rem 1rem; font-size: 0.9rem; background: linear-gradient(135deg, #10b981, #059669); color: white;">
@@ -1786,11 +1985,10 @@
           </button>
         </div>
         <div
-          style="background: #fffafa; padding: 8px 15px; border-radius: 20px; box-shadow: 0 5px 15px rgba(255, 182, 193, 0.15); border: 2px solid #fff0f5; color: #4a4a4a; font-size: 0.9rem;">
-          <i class="fas fa-heart" style="color: #ff69b4; font-size: 1rem; margin-right: 5px;"></i>
-          ผู้ใช้งาน: <strong id="displayUsername" style="color: #ff69b4;">...</strong>
-          <a href="#" onclick="doLogout()"
-            style="margin-left: 15px; color: #ff8da1; text-decoration: none; font-weight: 600;"><i
+          style="background: #ffffff; padding: 8px 15px; border-radius: 20px; box-shadow: 0 5px 15px rgba(37, 99, 235, 0.15); border: 2px solid #eff6ff; color: #4a4a4a; font-size: 0.9rem;">
+          <i class="fas fa-user-circle" style="color: #3b82f6; font-size: 1rem; margin-right: 5px;"></i>
+          ผู้ใช้งาน: <strong id="displayUsername" style="color: #3b82f6;">...</strong>
+          <a href="#" onclick="event.preventDefault(); doLogout()" class="logout-btn"><i
               class="fas fa-sign-out-alt"></i> ออกจากระบบ</a>
         </div>
       </div>
@@ -1872,7 +2070,7 @@
           <div class="dashboard-card" style="max-width: 100%;">
             <div style="display: flex; flex-direction: column; height: 100%;">
               <h2 style="margin: 0 0 0.5rem 0; color: #4a4a4a; font-weight: 700; letter-spacing: -0.5px;"><i
-                  class="fas fa-chart-pie" style="color: #ff8da1;"></i> สัดส่วนความพึงพอใจ</h2>
+                  class="fas fa-chart-pie" style="color: #3b82f6;"></i> สัดส่วนความพึงพอใจ</h2>
               <p style="text-align: center; color: var(--text-secondary); margin-bottom: 1rem;">
                 ข้อมูลสรุปจากแบบประเมินความพึงพอใจทั้งหมด
               </p>
@@ -1885,36 +2083,46 @@
 
           <!-- กล่องขวา: รายละเอียดรายบุคคล -->
           <div class="dashboard-card" style="max-width: 100%; display: flex; flex-direction: column; overflow: hidden;">
-            <h2 style="margin: 0 0 0.5rem 0; color: #4a4a4a; font-weight: 700; letter-spacing: -0.5px;"><i
-                class="fas fa-users" style="color: #ff8da1;"></i> รายละเอียดรายบุคคล</h2>
-            <p style="color: #a1a1aa; font-size: 0.95rem; margin-bottom: 1rem;">
-              ข้อมูลสถิติและความคิดเห็นแยกตามเจ้าหน้าที่แต่ละท่าน</p>
+            <div
+              style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 1rem;">
+              <div>
+                <h2 style="margin: 0 0 0.5rem 0; color: #4a4a4a; font-weight: 700; letter-spacing: -0.5px;"><i
+                    class="fas fa-users" style="color: #3b82f6;"></i> รายละเอียดรายบุคคล</h2>
+                <p style="color: #a1a1aa; font-size: 0.95rem; margin: 0;">
+                  ข้อมูลสถิติและความคิดเห็นแยกตามเจ้าหน้าที่แต่ละท่าน</p>
+              </div>
+              <input type="text" id="staffSearchInput" onkeyup="filterStaffByName()" placeholder="ค้นหาชื่อพนักงาน..."
+                style="padding: 0.5rem 1rem; border-radius: 20px; border: 2px solid #e5e7eb; outline: none; font-family: 'Kanit', sans-serif; font-size: 0.9rem; width: 220px; max-width: 100%; transition: border-color 0.3s;"
+                onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e5e7eb'">
+            </div>
 
             <div id="staffDetailsContainer" class="staff-grid"
               style="overflow-y: auto; flex-grow: 1; min-height: 0; padding-right: 10px; padding-bottom: 10px;"></div>
           </div>
         </div>
 
+        <!-- กราฟแสดงแนวโน้ม (Trend Chart) -->
+        <div class="dashboard-card" style="max-width: 100%; margin-top: 1.5rem; display: flex; flex-direction: column;">
+          <h2 style="margin: 0 0 0.5rem 0; color: #4a4a4a; font-weight: 700; letter-spacing: -0.5px;"><i
+              class="fas fa-chart-line" style="color: #3b82f6;"></i> แนวโน้มความพึงพอใจรายวัน</h2>
+          <p style="color: #a1a1aa; font-size: 0.95rem; margin-bottom: 1.5rem;">
+            แสดงการเปลี่ยนแปลงของระดับความพึงพอใจในแต่ละวัน</p>
+          <div id="trendDataContainer"
+            style="flex-grow: 1; max-height: 470px; overflow-y: auto; width: 100%; padding-right: 5px;">
+          </div>
+        </div>
+
         <!-- กล่องความคิดเห็นทั้งหมด (เพิ่มใหม่) -->
         <div class="dashboard-card" style="max-width: 100%; margin-top: 1.5rem; display: flex; flex-direction: column;">
           <h2 style="margin: 0 0 0.5rem 0; color: #4a4a4a; font-weight: 700; letter-spacing: -0.5px;"><i
-              class="fas fa-comment-dots" style="color: #ff8da1;"></i> ความคิดเห็นเพิ่มเติม</h2>
+              class="fas fa-comment-dots" style="color: #3b82f6;"></i> ความคิดเห็นเพิ่มเติม</h2>
           <p style="color: #a1a1aa; font-size: 0.95rem; margin-bottom: 1.5rem;">
             แสดงความคิดเห็นจากผู้รับบริการทั้งหมดแยกตามเจ้าหน้าที่</p>
           <div id="allCommentsContainer" class="comments-grid"
             style="overflow-y: auto; flex-grow: 1; padding-right: 10px; padding-bottom: 10px;"></div>
         </div>
 
-        <!-- ปุ่มเลื่อนขึ้นบนสุดและลงล่างสุด -->
-        <div class="scroll-btn-group">
-          <button class="scroll-btn" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" title="เลื่อนขึ้นบนสุด">
-            <i class="fas fa-chevron-up"></i>
-          </button>
-          <button class="scroll-btn" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })"
-            title="เลื่อนลงล่างสุด">
-            <i class="fas fa-chevron-down"></i>
-          </button>
-        </div>
+
 
 
 
@@ -1931,6 +2139,19 @@
           </button>
           <h2 style="margin: 0; color: #4a4a4a; font-weight: 700;"><i class="fas fa-users-cog"
               style="color: #667eea;"></i> จัดการเจ้าหน้าที่</h2>
+        </div>
+        <div
+          style="display: flex; gap: 10px; flex: 1; min-width: 300px; justify-content: flex-end; align-items: center;">
+          <div class="input-with-icon" style="flex: 1; max-width: 250px;">
+            <i class="fas fa-search"
+              style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #a1a1aa;"></i>
+            <input type="text" id="adminSearchInput" oninput="filterAdminStaff()" placeholder="ค้นหาชื่อ..."
+              style="width: 100%; padding: 0.5rem 1rem 0.5rem 2.2rem; border-radius: 12px; border: 1px solid #e5e7eb; outline: none; box-sizing: border-box; font-family: inherit;">
+          </div>
+          <select id="adminDeptFilter" onchange="filterAdminStaff()"
+            style="padding: 0.5rem 1rem; border-radius: 12px; border: 1px solid #e5e7eb; outline: none; background: white; font-family: inherit; color: #4b5563; cursor: pointer; max-width: 150px;">
+            <option value="">ทุกแผนก</option>
+          </select>
         </div>
         <div style="display: flex; gap: 5px; background: rgba(102, 126, 234, 0.1); padding: 5px; border-radius: 12px;">
           <button id="btnAdminGrid" onclick="setAdminLayout('grid')"
@@ -2047,22 +2268,26 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
+      const GAS_URL = 'https://script.google.com/macros/s/AKfycbw-wFPhxBOEbXMrilUcFQnCYLxYZNsueWGg8KvRIqPHbqF85yph5TKzwcGH_diTxoTE/exec';
 
-      const GAS_API_URL = "https://script.google.com/macros/s/AKfycbytRUc7JD0KUP7DO5AN9-whhTJL2ameOy0TYAm_radGTWwMelhnPJbXnO2ZSV0ttaFD/exec"; // <-- เอา Web App URL จาก Apps Script มาใส่ตรงนี้
-
-      async function fetchAPI(action, data = {}) {
-        if (!GAS_API_URL) {
-          throw new Error("ยังไม่ได้ตั้งค่า GAS_API_URL");
+      async function callGasApi(action, payload) {
+        try {
+          const response = await fetch(GAS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: action, ...payload })
+          });
+          return await response.json();
+        } catch (error) {
+          console.error('Error calling GAS API:', error);
+          throw error;
         }
-        const response = await fetch(GAS_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: action, data: data })
-        });
-        return await response.json();
       }
 
+
+
       let myChart = null;
+      let trendChartInstance = null;
       let sessionToken = '';
 
       /**
@@ -2088,7 +2313,23 @@
           title: 'เซสชันหมดอายุ',
           text: message || 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
           confirmButtonColor: '#ff8da1'
-        }).then(function () { location.reload(); });
+        }).then(function () {
+          document.getElementById('dashboardView').style.display = 'none';
+          const adminView = document.getElementById('adminView');
+          if (adminView) adminView.style.display = 'none';
+          const login = document.getElementById('loginView');
+          login.style.display = 'block';
+          login.classList.remove('animate-enter');
+          void login.offsetWidth;
+          login.classList.add('animate-enter');
+          document.getElementById('passwordInput').value = '';
+          document.getElementById('loginError').style.display = 'none';
+          const btn = document.getElementById('btnLogin');
+          if (btn) {
+            btn.innerHTML = '<span class="btn-text">เข้าสู่ระบบ</span>';
+            btn.disabled = false;
+          }
+        });
       }
 
       // เมื่อโหลดหน้าเว็บเสร็จ
@@ -2105,7 +2346,11 @@
               sessionToken = userData.token;
               document.getElementById('displayUsername').innerText = userData.name || '';
               document.getElementById('loginView').style.display = 'none';
-              document.getElementById('dashboardView').style.display = 'flex';
+              const dash = document.getElementById('dashboardView');
+              dash.style.display = 'flex';
+              dash.classList.remove('animate-enter');
+              void dash.offsetWidth;
+              dash.classList.add('animate-enter');
               if (userData.isItAdmin) {
                 document.getElementById('btnAdminManage').style.display = 'inline-flex';
               }
@@ -2122,6 +2367,17 @@
         const userInput = document.getElementById('usernameInput');
         if (userInput) userInput.focus();
 
+        // โหลดรหัสผ่านที่จำไว้
+        const savedLogin = localStorage.getItem('qr_saved_login');
+        if (savedLogin) {
+          try {
+            const loginData = JSON.parse(savedLogin);
+            document.getElementById('usernameInput').value = loginData.user || '';
+            document.getElementById('passwordInput').value = loginData.pass || '';
+            document.getElementById('rememberMe').checked = true;
+          } catch (e) { }
+        }
+
         // ให้กด Enter เพื่อล็อกอินได้
         document.addEventListener('keypress', function (e) {
           if (e.key === 'Enter' && document.getElementById('loginView').style.display !== 'none') {
@@ -2134,10 +2390,42 @@
         const token = sessionToken;
         localStorage.removeItem('qr_dashboard_session');
         sessionToken = '';
-        // แจ้งเซิร์ฟเวอร์ให้ทำลาย Session ด้วย แล้วค่อยรีโหลด
-        fetchAPI('logout', { token: token })
-          .then(function () { location.reload(); })
-          .catch(function () { location.reload(); });
+
+        document.getElementById('dashboardView').style.display = 'none';
+        const adminView = document.getElementById('adminView');
+        if (adminView) adminView.style.display = 'none';
+        const login = document.getElementById('loginView');
+        login.style.display = 'block';
+        login.classList.remove('animate-enter');
+        void login.offsetWidth;
+        login.classList.add('animate-enter');
+        document.getElementById('passwordInput').value = '';
+        document.getElementById('loginError').style.display = 'none';
+
+        // แจ้งเซิร์ฟเวอร์ให้ทำลาย Session
+        fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'logout', token }) }).then(res => res.json()).then(res => { if (res.success && typeof undefined === 'function') undefined(res); else if (typeof undefined === 'function') undefined(res); else if (typeof undefined === 'function') undefined(res); }).catch(e => { if (typeof undefined === 'function') undefined(e); });
+
+        const btn = document.getElementById('btnLogin');
+        if (btn) {
+          btn.innerHTML = '<span class="btn-text">เข้าสู่ระบบ</span>';
+          btn.disabled = false;
+        }
+      }
+
+      function togglePasswordVisibility() {
+        const passInput = document.getElementById('passwordInput');
+        const eyeIcon = document.getElementById('togglePassword');
+        if (passInput.type === 'password') {
+          passInput.type = 'text';
+          eyeIcon.classList.remove('fa-eye');
+          eyeIcon.classList.add('fa-eye-slash');
+          eyeIcon.style.color = '#3b82f6';
+        } else {
+          passInput.type = 'password';
+          eyeIcon.classList.remove('fa-eye-slash');
+          eyeIcon.classList.add('fa-eye');
+          eyeIcon.style.color = '#a1a1aa';
+        }
       }
 
       function doLogin() {
@@ -2156,12 +2444,21 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังตรวจสอบ...';
         btn.disabled = true;
 
-        fetchAPI('verifyLogin', { username: user, password: pass })
+        callGasApi('verifyLogin', { username: user, password: pass })
           .then(function (res) {
-            if (!res) throw new Error("ไม่มีการตอบกลับจากเซิร์ฟเวอร์");
-
+            if (!res) {
+              errorMsg.innerText = "ไม่มีการตอบกลับจากเซิร์ฟเวอร์";
+              errorMsg.style.display = 'block';
+              btn.innerHTML = '<span class="btn-text">เข้าสู่ระบบ</span>';
+              btn.disabled = false;
+              return;
+            }
             if (res.success) {
-              // บันทึก Session ลงเครื่องจนกว่าจะกด Logout หรือ Token หมดอายุ (30 วัน)
+              if (document.getElementById('rememberMe').checked) {
+                localStorage.setItem('qr_saved_login', JSON.stringify({ user: user, pass: pass }));
+              } else {
+                localStorage.removeItem('qr_saved_login');
+              }
               sessionToken = res.token;
               localStorage.setItem('qr_dashboard_session', JSON.stringify({
                 name: res.name,
@@ -2171,16 +2468,15 @@
                 token: res.token
               }));
               document.getElementById('displayUsername').innerText = res.name;
-
-              // เช็คสิทธิ์ฝ่ายสารสนเทศ (ตัดสินจากฝั่งเซิร์ฟเวอร์)
               if (res.isItAdmin) {
                 document.getElementById('btnAdminManage').style.display = 'inline-flex';
               }
-
-              // ล็อกอินสำเร็จ ซ่อนฟอร์มและโชว์ Dashboard
               document.getElementById('loginView').style.display = 'none';
-              document.getElementById('dashboardView').style.display = 'flex';
-
+              const dash = document.getElementById('dashboardView');
+              dash.style.display = 'flex';
+              dash.classList.remove('animate-enter');
+              void dash.offsetWidth;
+              dash.classList.add('animate-enter');
               if (res.initialDashboardData) {
                 onDataLoaded(res.initialDashboardData);
               } else {
@@ -2192,74 +2488,850 @@
               btn.innerHTML = '<span class="btn-text">เข้าสู่ระบบ</span>';
               btn.disabled = false;
             }
-
           })
           .catch(function (err) {
-
             console.error(err);
             errorMsg.innerText = "เซิร์ฟเวอร์แจ้งว่า: " + err.message;
             errorMsg.style.display = 'block';
             btn.innerHTML = '<span class="btn-text">เข้าสู่ระบบ</span>';
             btn.disabled = false;
-
           });
       }
 
       let currentDateFilter = 'all';
 
-      function loadDashboardData() {
-        // แสดงสถานะกำลังโหลด
-        document.getElementById('loading').style.display = 'flex';
-        document.getElementById('dashboardContent').style.display = 'none';
-        document.getElementById('staffDetailsContainer').innerHTML = '';
-        document.getElementById('allCommentsContainer').innerHTML = '';
+      function loadDashboardData(isSilent = false) {
+        if (!isSilent) {
+          // แสดงสถานะกำลังโหลด
+          document.getElementById('loading').style.display = 'flex';
+          document.getElementById('dashboardContent').style.display = 'none';
+          document.getElementById('staffDetailsContainer').innerHTML = '';
+          document.getElementById('allCommentsContainer').innerHTML = '';
+        } else {
+          const silentIndicator = document.getElementById('silentLoadingIndicator');
+          if (silentIndicator) silentIndicator.style.display = 'flex';
+        }
 
-        fetchAPI('getDashboardData', { token: sessionToken, dateFilter: currentDateFilter })
-          .then(onDataLoaded)
+        callGasApi('getDashboardData', { sessionToken: sessionToken, dateFilter: currentDateFilter })
+          .then(function (res) {
+            const silentIndicator = document.getElementById('silentLoadingIndicator');
+            if (silentIndicator) silentIndicator.style.display = 'none';
+
+            if (isSilent && res && res.success && window.lastDashboardData) {
+              if (res.total === window.lastDashboardData.total &&
+                JSON.stringify(res.counts) === JSON.stringify(window.lastDashboardData.counts)) {
+                return;
+              }
+            }
+            onDataLoaded(res);
+          })
           .catch(function (err) {
+            const silentIndicator = document.getElementById('silentLoadingIndicator');
+            if (silentIndicator) silentIndicator.style.display = 'none';
+
             window.pendingPrint = false;
-            document.getElementById('loading').innerHTML = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
-            document.getElementById('staffDetailsContainer').innerHTML = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
-            Swal.fire({
-              icon: 'error',
-              title: 'ดึงข้อมูลไม่สำเร็จ',
-              text: (err && err.message) ? err.message : String(err),
-              confirmButtonColor: '#ff8da1'
-            });
+            if (!isSilent) {
+              document.getElementById('loading').innerHTML = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
+              document.getElementById('staffDetailsContainer').innerHTML = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
+              Swal.fire({
+                icon: 'error',
+                title: 'ดึงข้อมูลไม่สำเร็จ',
+                text: (err && err.message) ? err.message : String(err),
+                confirmButtonColor: '#ff8da1'
+              });
+            } else {
+              console.warn("Background refresh failed:", err);
+            }
           });
       }
 
       function openPrintDialog() {
+        const data = window.lastDashboardData;
+        let staffOptions = `
+          <label class="radio-card">
+            <input type="checkbox" name="printStaffFilter" value="all" checked onchange="if(this.checked) { document.querySelectorAll('input[name=printStaffFilter]:not([value=all])').forEach(cb => cb.checked = false); } else { this.checked = true; }">
+            <div class="card-content">
+              <span class="icon">👥</span>
+              <div class="text">
+                <span class="title">ทุกคน (All Staff)</span>
+                <span class="subtitle">ดึงข้อมูลของทุกคน</span>
+              </div>
+            </div>
+          </label>
+        `;
+        if (data && data.staffData) {
+          const sortedStaffNames = Object.keys(data.staffData).sort((a, b) => a.localeCompare(b, 'th', { numeric: true, sensitivity: 'base' }));
+          sortedStaffNames.forEach(name => {
+            staffOptions += `
+              <label class="radio-card">
+                <input type="checkbox" name="printStaffFilter" value="${name}" onchange="if(this.checked) { document.querySelector('input[name=printStaffFilter][value=all]').checked = false; } else { if(document.querySelectorAll('input[name=printStaffFilter]:not([value=all]):checked').length === 0) { document.querySelector('input[name=printStaffFilter][value=all]').checked = true; } }">
+                <div class="card-content" style="padding: 10px 14px;">
+                  <span class="icon" style="font-size: 1.2rem;">👤</span>
+                  <div class="text">
+                    <span class="title" style="font-size: 0.95rem;">${escapeHtml(name)}</span>
+                  </div>
+                </div>
+              </label>
+            `;
+          });
+        }
+
         Swal.fire({
           title: 'พิมพ์รายงานสรุปผล',
           html: `
-          <div style="text-align: left; margin-top: 15px;">
-            <label style="display: block; font-size: 0.95rem; margin-bottom: 8px; color: #4a4a4a;">เลือกช่วงเวลาที่ต้องการพิมพ์:</label>
-            <select id="printDateRange" class="swal2-input" style="width: 100%; margin: 0; padding: 0.5rem; border-radius: 8px; font-family: 'Kanit', sans-serif;">
-              <option value="all">ทั้งหมด (All Time)</option>
-              <option value="today">วันนี้ (Today)</option>
-              <option value="this_month">เดือนนี้ (This Month)</option>
-            </select>
+<style>
+.premium-print-modal {
+  text-align: left;
+  font-family: 'Kanit', sans-serif;
+  color: #334155;
+}
+.premium-print-modal h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+}
+.premium-print-modal h3 i {
+  color: #0ea5e9;
+  margin-right: 8px;
+  font-size: 1.2rem;
+}
+.radio-card input {
+  display: none;
+}
+.radio-card .card-content {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border: 2px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 8px;
+}
+.radio-card:hover .card-content {
+  border-color: #bae6fd;
+  transform: translateY(-1px);
+}
+.radio-card input:checked + .card-content {
+  border-color: #0ea5e9;
+  background: #f0f9ff;
+  box-shadow: 0 4px 15px rgba(14, 165, 233, 0.15);
+}
+.radio-card .icon {
+  font-size: 1.4rem;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+.radio-card .text {
+  display: flex;
+  flex-direction: column;
+}
+.radio-card .title {
+  font-weight: 500;
+  color: #1e293b;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+.radio-card .subtitle {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+.modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  padding: 10px;
+}
+.modal-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.staff-scroll {
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+/* Custom Scrollbar */
+.staff-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.staff-scroll::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 10px;
+}
+.staff-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.staff-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.date-picker-box {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 5px;
+}
+.date-input-group {
+  margin-bottom: 10px;
+}
+.date-input-group:last-child {
+  margin-bottom: 0;
+}
+.date-input-group span {
+  display: block;
+  font-size: 0.85rem;
+  color: #475569;
+  margin-bottom: 4px;
+}
+.thai-datepicker {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-family: 'Kanit', sans-serif;
+  font-size: 0.95rem;
+  color: #334155;
+  outline: none;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+.thai-datepicker:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+</style>
+
+<div class="premium-print-modal">
+  <div class="modal-grid">
+    
+    <!-- Left Column: Date Range & Format -->
+    <div class="modal-col">
+      <!-- Date Range -->
+      <div>
+        <h3><i class="fas fa-calendar-alt"></i> ช่วงข้อมูล (Date Range)</h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px;">
+          <label class="radio-card" style="margin: 0;">
+            <input type="radio" name="printDateRange" value="all" onchange="document.getElementById('printCustomDateContainer').style.display='none';" checked>
+            <div class="card-content" style="margin-bottom: 0; padding: 10px; height: 100%; box-sizing: border-box;">
+              <span class="icon" style="margin-right: 8px;">📊</span>
+              <div class="text">
+                <span class="title">ข้อมูลทั้งหมด</span>
+                <span class="subtitle" style="font-size: 0.75rem;">ตั้งแต่เริ่มต้น-ปัจจุบัน</span>
+              </div>
+            </div>
+          </label>
+          
+          <label class="radio-card" style="margin: 0;">
+            <input type="radio" name="printDateRange" value="today" onchange="document.getElementById('printCustomDateContainer').style.display='none';">
+            <div class="card-content" style="margin-bottom: 0; padding: 10px; height: 100%; box-sizing: border-box;">
+              <span class="icon" style="margin-right: 8px;">📅</span>
+              <div class="text">
+                <span class="title">เฉพาะวันนี้</span>
+                <span class="subtitle" style="font-size: 0.75rem;">ข้อมูลของวันนี้</span>
+              </div>
+            </div>
+          </label>
+          
+          <label class="radio-card" style="margin: 0;">
+            <input type="radio" name="printDateRange" value="this_month" onchange="document.getElementById('printCustomDateContainer').style.display='none';">
+            <div class="card-content" style="margin-bottom: 0; padding: 10px; height: 100%; box-sizing: border-box;">
+              <span class="icon" style="margin-right: 8px;">📆</span>
+              <div class="text">
+                <span class="title">เฉพาะเดือนนี้</span>
+                <span class="subtitle" style="font-size: 0.75rem;">เดือนปัจจุบัน</span>
+              </div>
+            </div>
+          </label>
+          
+          <label class="radio-card" style="margin: 0;">
+            <input type="radio" name="printDateRange" value="custom" onchange="document.getElementById('printCustomDateContainer').style.display='block';">
+            <div class="card-content" style="margin-bottom: 0; padding: 10px; height: 100%; box-sizing: border-box;">
+              <span class="icon" style="margin-right: 8px;">🗓️</span>
+              <div class="text">
+                <span class="title">กำหนดเอง</span>
+                <span class="subtitle" style="font-size: 0.75rem;">เลือกเริ่ม-สิ้นสุด</span>
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Custom Date Container -->
+        <div id="printCustomDateContainer" class="date-picker-box" style="display: none;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="date-input-group" style="margin-bottom: 0;">
+              <span><i class="fas fa-play-circle" style="color: #0ea5e9;"></i> เริ่มต้น:</span>
+              <input type="text" id="printCustomDateStart" class="thai-datepicker" value="${currentDateFilter !== 'all' && currentDateFilter !== 'today' && currentDateFilter !== 'this_month' && currentDateFilter.includes('_') ? currentDateFilter.split('_')[0] : (currentDateFilter !== 'all' && currentDateFilter !== 'today' && currentDateFilter !== 'this_month' ? currentDateFilter : '')}">
+            </div>
+            <div class="date-input-group" style="margin-bottom: 0;">
+              <span><i class="fas fa-stop-circle" style="color: #ef4444;"></i> สิ้นสุด:</span>
+              <input type="text" id="printCustomDateEnd" class="thai-datepicker" value="${currentDateFilter !== 'all' && currentDateFilter !== 'today' && currentDateFilter !== 'this_month' && currentDateFilter.includes('_') ? currentDateFilter.split('_')[1] : (currentDateFilter !== 'all' && currentDateFilter !== 'today' && currentDateFilter !== 'this_month' ? currentDateFilter : '')}">
+            </div>
           </div>
-        `,
+        </div>
+      </div>
+      
+      <!-- Content Format -->
+      <div style="margin-top: 10px;">
+        <h3><i class="fas fa-file-alt"></i> รูปแบบข้อมูล (Format)</h3>
+        
+        <label class="radio-card">
+          <input type="radio" name="printContentFilter" value="all" checked>
+          <div class="card-content">
+            <span class="icon">⭐</span>
+            <div class="text">
+              <span class="title">แสดงคะแนน และ ข้อเสนอแนะ</span>
+              <span class="subtitle">รายงานฉบับสมบูรณ์</span>
+            </div>
+          </div>
+        </label>
+
+        <label class="radio-card">
+          <input type="radio" name="printContentFilter" value="score_only">
+          <div class="card-content">
+            <span class="icon">📈</span>
+            <div class="text">
+              <span class="title">เฉพาะตารางคะแนน</span>
+              <span class="subtitle">ซ่อนส่วนข้อเสนอแนะ</span>
+            </div>
+          </div>
+        </label>
+
+        <label class="radio-card">
+          <input type="radio" name="printContentFilter" value="comment_only">
+          <div class="card-content">
+            <span class="icon">💬</span>
+            <div class="text">
+              <span class="title">เฉพาะข้อเสนอแนะ</span>
+              <span class="subtitle">ซ่อนส่วนตารางคะแนน</span>
+            </div>
+          </div>
+        </label>
+
+        <label class="radio-card">
+          <input type="radio" name="printContentFilter" value="trend_only">
+          <div class="card-content">
+            <span class="icon">📅</span>
+            <div class="text">
+              <span class="title">เฉพาะแนวโน้มรายวัน</span>
+              <span class="subtitle">ซ่อนตารางคะแนนและข้อเสนอแนะ</span>
+            </div>
+          </div>
+        </label>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Staff Filter -->
+    <div class="modal-col">
+      <div>
+        <h3>
+          <i class="fas fa-users"></i> เลือกเจ้าหน้าที่
+          <span style="font-size: 0.8rem; color: #94a3b8; font-weight: normal; margin-left: auto;">(เลือกได้หลายคน)</span>
+        </h3>
+        
+        <div class="staff-scroll">
+          ${staffOptions}
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</div>
+          `,
+          showDenyButton: false,
           showCancelButton: true,
           confirmButtonColor: '#10b981',
-          cancelButtonColor: '#a1a1aa',
-          confirmButtonText: '<i class="fas fa-print"></i> พิมพ์',
+          cancelButtonColor: '#94a3b8',
+          confirmButtonText: '<i class="fas fa-file-pdf" style="margin-right: 5px;"></i> ดาวน์โหลด PDF',
           cancelButtonText: 'ยกเลิก',
+          width: '900px',
+          padding: '1.5em',
+          background: '#ffffff',
+          backdrop: 'rgba(15, 23, 42, 0.4)',
+          didOpen: () => {
+            const htmlContainer = Swal.getHtmlContainer();
+            if (htmlContainer) {
+              htmlContainer.style.overflow = 'visible';
+            }
+            const popup = Swal.getPopup();
+            if (popup) {
+              popup.style.overflow = 'visible';
+            }
+
+            // Initialize Flatpickr for Thai Buddhist Year format
+            if (typeof flatpickr !== 'undefined') {
+              let endPicker;
+
+              const formatThaiDate = (date) => {
+                const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+                const d = date.getDate();
+                const m = thaiMonths[date.getMonth()];
+                const y = date.getFullYear() + 543;
+                return d + " " + m + " " + y;
+              };
+
+              const startPicker = flatpickr("#printCustomDateStart", {
+                locale: "th",
+                dateFormat: "Y-m-d",
+                defaultDate: document.getElementById('printCustomDateStart').value || new Date(),
+                altInput: true,
+                altFormat: "d M Y",
+                formatDate: (date, format, locale) => {
+                  if (format === "d M Y") return formatThaiDate(date);
+                  return flatpickr.formatDate(date, format);
+                },
+                onChange: function (selectedDates, dateStr, instance) {
+                  if (endPicker) {
+                    endPicker.set("minDate", dateStr);
+                    const currentEndDate = endPicker.selectedDates[0];
+                    if (currentEndDate && selectedDates[0] > currentEndDate) {
+                      endPicker.setDate(dateStr);
+                    }
+                  }
+                }
+              });
+
+              endPicker = flatpickr("#printCustomDateEnd", {
+                locale: "th",
+                dateFormat: "Y-m-d",
+                defaultDate: document.getElementById('printCustomDateEnd').value || new Date(),
+                minDate: document.getElementById('printCustomDateStart').value || new Date(),
+                altInput: true,
+                altFormat: "d M Y",
+                formatDate: (date, format, locale) => {
+                  if (format === "d M Y") return formatThaiDate(date);
+                  return flatpickr.formatDate(date, format);
+                }
+              });
+            }
+          },
           preConfirm: () => {
-            return document.getElementById('printDateRange').value;
+            let dateRadio = document.querySelector('input[name="printDateRange"]:checked');
+            let selectedDate = dateRadio ? dateRadio.value : 'all';
+            if (selectedDate === 'custom') {
+              const start = document.getElementById('printCustomDateStart').value;
+              const end = document.getElementById('printCustomDateEnd').value;
+              if (!start || !end) {
+                Swal.showValidationMessage('กรุณาระบุวันที่เริ่มต้นและสิ้นสุด');
+                return false;
+              }
+              if (new Date(end) < new Date(start)) {
+                Swal.showValidationMessage('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น');
+                return false;
+              }
+              selectedDate = start + '_' + end;
+            }
+            return {
+              dateRange: selectedDate,
+              staffFilter: Array.from(document.querySelectorAll('input[name="printStaffFilter"]:checked')).map(cb => cb.value),
+              contentFilter: document.querySelector('input[name="printContentFilter"]:checked') ? document.querySelector('input[name="printContentFilter"]:checked').value : 'all'
+            };
           }
         }).then((result) => {
           if (result.isConfirmed) {
-            if (result.value !== currentDateFilter) {
-              currentDateFilter = result.value;
-              window.pendingPrint = true;
+            const filters = result.value;
+            window.printFilters = filters; // Save for generateReportHtml
+
+            if (filters.dateRange !== currentDateFilter) {
+              currentDateFilter = filters.dateRange;
+              window.pendingPdf = true;
+              
+              Swal.fire({
+                title: 'กำลังเตรียมข้อมูล...',
+                html: 'กรุณารอสักครู่ ระบบกำลังดึงข้อมูลตามช่วงเวลาใหม่เพื่อสร้าง PDF',
+                allowOutsideClick: false,
+                didOpen: () => {
+                  Swal.showLoading();
+                }
+              });
+
               loadDashboardData();
             } else {
-              window.print();
+              downloadPDF();
             }
           }
+        });
+      }
+
+      function generateReportHtml() {
+        const data = window.lastDashboardData;
+        if (!data || !data.success) return '';
+
+        const filters = window.printFilters || { staffFilter: ['all'], contentFilter: 'all', dateRange: currentDateFilter };
+        const isAllStaff = Array.isArray(filters.staffFilter) ? filters.staffFilter.includes('all') || filters.staffFilter.length === 0 : filters.staffFilter === 'all';
+        
+        const showScoreTable = filters.contentFilter === 'all' || filters.contentFilter === 'score_only';
+        const showTrend = filters.contentFilter === 'all' || filters.contentFilter === 'trend_only';
+        const showComment = filters.contentFilter === 'all' || filters.contentFilter === 'comment_only';
+        const showOverview = showScoreTable || showTrend; // Show overview if either score or trend is requested
+
+        let dateText = 'ข้อมูลทั้งหมด';
+        if (filters.dateRange === 'today') dateText = 'เฉพาะวันนี้';
+        else if (filters.dateRange === 'this_month') dateText = 'เฉพาะเดือนนี้';
+        else if (filters.dateRange !== 'all') {
+          if (filters.dateRange.includes('_')) {
+            const parts = filters.dateRange.split('_');
+            const startParts = parts[0].split('-');
+            const endParts = parts[1].split('-');
+            if (startParts.length === 3 && endParts.length === 3) {
+              dateText = `${startParts[2]}/${startParts[1]}/${parseInt(startParts[0], 10) + 543} ถึง ${endParts[2]}/${endParts[1]}/${parseInt(endParts[0], 10) + 543}`;
+            }
+          } else {
+            const parts = filters.dateRange.split('-');
+            if (parts.length === 3) dateText = `${parts[2]}/${parts[1]}/${parseInt(parts[0], 10) + 543}`;
+          }
+        }
+
+        let html = `
+          <div id="reportContainer" style="font-family: 'Sarabun', 'Kanit', sans-serif; background: white; color: #000; line-height: 1.5; padding: 10mm;">
+            <!-- Header -->
+            <div style="text-align: center; margin-bottom: 10mm;">
+              <img src="https://i.ibb.co/WpF86bhw/Logo-50-Year.png" alt="Logo" style="height: 30mm; object-fit: contain; margin-bottom: 5mm;">
+              <h1 style="margin: 0 0 4mm 0; font-size: 20pt; font-weight: bold;">รายงานสรุปผลการประเมินความพึงพอใจ</h1>
+              <p style="margin: 0; font-size: 14pt; font-weight: bold;">ประจำวันที่: ${dateText}</p>
+            </div>
+        `;
+
+        const total = data.total || 0;
+        const count3 = data.counts['3'] || 0;
+        const count2 = data.counts['2'] || 0;
+        const count1 = data.counts['1'] || 0;
+
+        const pct3 = total > 0 ? Math.round((count3 / total) * 100) : 0;
+        const pct2 = total > 0 ? Math.round((count2 / total) * 100) : 0;
+        const pct1 = total > 0 ? Math.round((count1 / total) * 100) : 0;
+
+        let secNum = 1;
+        let hasAnyData = false;
+
+        const filteredStaff = [];
+        const allComments = [];
+        if (data.staffData) {
+          const sortedStaffNames = Object.keys(data.staffData).sort((a, b) => a.localeCompare(b, 'th', { numeric: true, sensitivity: 'base' }));
+          sortedStaffNames.forEach(staffName => {
+            if (!isAllStaff && (Array.isArray(filters.staffFilter) ? !filters.staffFilter.includes(staffName) : staffName !== filters.staffFilter)) return;
+            const staff = data.staffData[staffName];
+            const totalScore = (staff.excellent || 0) + (staff.good || 0) + (staff.poor || 0);
+            if (totalScore === 0 && staff.comments.length === 0 && !isAllStaff) return;
+            filteredStaff.push({ name: staffName, data: staff });
+            if (staff.comments && staff.comments.length > 0) {
+              staff.comments.forEach(c => {
+                allComments.push({ ...c, staffName: staffName });
+              });
+            }
+          });
+        }
+
+        if (showOverview) {
+          // Section 1
+          html += `
+            <div style="margin-bottom: 12mm;">
+              <h2 style="font-size: 14pt; margin-bottom: 3mm; font-weight: bold;">${secNum++}. ภาพรวมสถิติการประเมิน</h2>
+              <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 12pt;">
+                <thead>
+                  <tr>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 25%;">ผู้ประเมินทั้งหมด (คน)</th>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 25%;">ดีเยี่ยม (คน/%)</th>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 25%;">ดี (คน/%)</th>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 25%;">ควรปรับปรุง (คน/%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="padding: 3mm; border: 1px solid #000;">${total}</td>
+                    <td style="padding: 3mm; border: 1px solid #000;">${count3} (${pct3}%)</td>
+                    <td style="padding: 3mm; border: 1px solid #000;">${count2} (${pct2}%)</td>
+                    <td style="padding: 3mm; border: 1px solid #000;">${count1} (${pct1}%)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          `;
+          hasAnyData = true;
+        }
+
+        if (showScoreTable && filteredStaff.length > 0) {
+          // Section 2
+          html += `
+            <div style="margin-bottom: 12mm; page-break-before: always;">
+              <h2 style="font-size: 14pt; margin-bottom: 3mm; font-weight: bold;">${secNum++}. คะแนนรายบุคคล</h2>
+              <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 12pt;">
+                <thead>
+                  <tr>
+                    <th style="padding: 3mm; border: 1px solid #000; text-align: center; width: 40%;">ชื่อ-สกุล</th>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 20%;">ดีเยี่ยม (ครั้ง)</th>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 20%;">ดี (ครั้ง)</th>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 20%;">ควรปรับปรุง (ครั้ง)</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+          filteredStaff.forEach(item => {
+            const s = item.data;
+            html += `
+                  <tr>
+                    <td style="padding: 3mm; border: 1px solid #000; text-align: center;">${escapeHtml(item.name)}</td>
+                    <td style="padding: 3mm; border: 1px solid #000;">${s.excellent || 0}</td>
+                    <td style="padding: 3mm; border: 1px solid #000;">${s.good || 0}</td>
+                    <td style="padding: 3mm; border: 1px solid #000;">${s.poor || 0}</td>
+                  </tr>
+            `;
+          });
+
+          html += `
+                </tbody>
+              </table>
+            </div>
+          `;
+
+          // Section 2B: คะแนนรายบุคคล (เปอร์เซ็นต์)
+          html += `
+            <div style="margin-bottom: 12mm; page-break-before: always;">
+              <h2 style="font-size: 14pt; margin-bottom: 3mm; font-weight: bold;">${secNum++}. คะแนนรายบุคคล (เปอร์เซ็นต์)</h2>
+              <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 12pt;">
+                <thead>
+                  <tr>
+                    <th style="padding: 3mm; border: 1px solid #000; text-align: center; width: 40%;">ชื่อ-สกุล</th>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 20%;">ดีเยี่ยม (%)</th>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 20%;">ดี (%)</th>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 20%;">ควรปรับปรุง (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+          filteredStaff.forEach(item => {
+            const s = item.data;
+            const t = (s.excellent || 0) + (s.good || 0) + (s.poor || 0);
+            const pe = t > 0 ? Math.round(((s.excellent || 0) / t) * 100) : 0;
+            const pg = t > 0 ? Math.round(((s.good || 0) / t) * 100) : 0;
+            const pp = t > 0 ? Math.round(((s.poor || 0) / t) * 100) : 0;
+            
+            html += `
+                  <tr>
+                    <td style="padding: 3mm; border: 1px solid #000; text-align: center;">${escapeHtml(item.name)}</td>
+                    <td style="padding: 3mm; border: 1px solid #000; color: #10b981;">${pe}%</td>
+                    <td style="padding: 3mm; border: 1px solid #000; color: #0ea5e9;">${pg}%</td>
+                    <td style="padding: 3mm; border: 1px solid #000; color: #ef4444;">${pp}%</td>
+                  </tr>
+            `;
+          });
+
+          html += `
+                </tbody>
+              </table>
+            </div>
+          `;
+          hasAnyData = true;
+        }
+
+        if (showTrend && data.trendData && data.trendData.labels && data.trendData.labels.length > 0) {
+          // Section 3: แนวโน้มความพึงพอใจรายวัน
+          html += `
+            <div style="margin-bottom: 12mm; page-break-before: always;">
+              <h2 style="font-size: 14pt; margin-bottom: 3mm; font-weight: bold;">${secNum++}. แนวโน้มความพึงพอใจรายวัน</h2>
+              <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 12pt;">
+                <thead>
+                  <tr>
+                    <th style="padding: 3mm; border: 1px solid #000; text-align: center; width: 40%;">วันที่</th>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 20%;">ดีเยี่ยม (ครั้ง)</th>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 20%;">ดี (ครั้ง)</th>
+                    <th style="padding: 3mm; border: 1px solid #000; width: 20%;">ควรปรับปรุง (ครั้ง)</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+          for (let i = 0; i < data.trendData.labels.length; i++) {
+            const label = data.trendData.labels[i];
+            const e = data.trendData.excellent[i] || 0;
+            const g = data.trendData.good[i] || 0;
+            const p = data.trendData.poor[i] || 0;
+            html += `
+                  <tr>
+                    <td style="padding: 3mm; border: 1px solid #000; text-align: center;">${label}</td>
+                    <td style="padding: 3mm; border: 1px solid #000;">${e}</td>
+                    <td style="padding: 3mm; border: 1px solid #000;">${g}</td>
+                    <td style="padding: 3mm; border: 1px solid #000;">${p}</td>
+                  </tr>
+            `;
+          }
+
+          html += `
+                </tbody>
+              </table>
+            </div>
+          `;
+          hasAnyData = true;
+        }
+
+        if (showComment && allComments.length > 0) {
+          // Section 4: ข้อเสนอแนะเพิ่มเติม - แบ่งหน้าละ 10 รายการ
+          const COMMENT_PER_PAGE = 10;
+          const commentChunks = [];
+          for (let i = 0; i < allComments.length; i += COMMENT_PER_PAGE) {
+            commentChunks.push(allComments.slice(i, i + COMMENT_PER_PAGE));
+          }
+
+          commentChunks.forEach((chunk, ci) => {
+            html += `<div style="page-break-before: always; height: 1px; clear: both;"></div>`;
+            html += `<div style="margin-bottom: 5mm; padding-top: 2px;">`;
+            if (ci === 0) {
+              html += `<h2 style="font-size: 14pt; margin-bottom: 3mm; font-weight: bold;">${secNum}. ข้อเสนอแนะเพิ่มเติม</h2>`;
+            }
+            
+            html += `
+              <table style="width: 100%; border-collapse: collapse; font-size: 11pt;">
+                <thead>
+                  <tr>
+                    <th style="padding: 3mm; border: 1px solid #000; text-align: center; width: 10%;">ลำดับ</th>
+                    <th style="padding: 3mm; border: 1px solid #000; text-align: left; width: 45%;">ข้อเสนอแนะ</th>
+                    <th style="padding: 3mm; border: 1px solid #000; text-align: center; width: 25%;">เจ้าหน้าที่</th>
+                    <th style="padding: 3mm; border: 1px solid #000; text-align: center; width: 20%;">ผู้ประเมิน</th>
+                  </tr>
+                </thead>
+                <tbody>
+            `;
+
+            chunk.forEach((c, cIdx) => {
+              const absIdx = ci * COMMENT_PER_PAGE + cIdx;
+              let ratingLabel = '';
+              if (c.rating === 3) ratingLabel = '[ดีเยี่ยม]';
+              else if (c.rating === 2) ratingLabel = '[ดี]';
+              else if (c.rating === 1) ratingLabel = '[ควรปรับปรุง]';
+
+              html += `
+                <tr>
+                  <td style="padding: 3mm; border: 1px solid #000; text-align: center;">${absIdx + 1}</td>
+                  <td style="padding: 3mm; border: 1px solid #000; text-align: left;">${ratingLabel} ${escapeHtml(c.text)}</td>
+                  <td style="padding: 3mm; border: 1px solid #000; text-align: center;">${escapeHtml(c.staffName)}</td>
+                  <td style="padding: 3mm; border: 1px solid #000; text-align: center;">${escapeHtml(c.evaluator)}</td>
+                </tr>
+              `;
+            });
+
+            html += `
+                </tbody>
+              </table>
+            </div>
+            `;
+          });
+          hasAnyData = true;
+        }
+
+        if (!hasAnyData) {
+          html += `<p style="text-align: center; color: #777; padding: 10mm; font-size: 14pt;">ไม่มีข้อมูลตามเงื่อนไขที่เลือก</p>`;
+        }
+
+        html += `
+          </div>
+        `;
+        return html;
+      }
+
+      function preparePrintWrapper() {
+        let wrapper = document.getElementById('hiddenReportWrapper');
+        if (!wrapper) {
+          wrapper = document.createElement('div');
+          wrapper.id = 'hiddenReportWrapper';
+          wrapper.style.display = 'none';
+          document.body.appendChild(wrapper);
+        }
+        wrapper.innerHTML = generateReportHtml();
+      }
+
+      function downloadPDF() {
+        const htmlString = generateReportHtml();
+
+        if (!htmlString) {
+          Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: 'ไม่มีข้อมูลสำหรับสร้าง PDF' });
+          return;
+        }
+
+        const fullHtml = `
+          <html>
+            <head>
+              <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+              <style>
+                table { page-break-inside: auto !important; }
+                tr { page-break-inside: avoid !important; page-break-after: auto !important; }
+                thead { display: table-header-group !important; }
+                tfoot { display: table-footer-group !important; }
+              </style>
+            </head>
+            <body style="margin:0; padding:0;">
+              ${htmlString}
+            </body>
+          </html>
+        `;
+
+        const filters = window.printFilters || { contentFilter: 'all', dateRange: currentDateFilter };
+        
+        let formatStr = '';
+        if (filters.contentFilter === 'score_only') formatStr = 'เฉพาะตารางคะแนน';
+        else if (filters.contentFilter === 'trend_only') formatStr = 'เฉพาะแนวโน้มรายวัน';
+        else if (filters.contentFilter === 'comment_only') formatStr = 'เฉพาะข้อเสนอแนะ';
+
+        let dateStr = 'ข้อมูลทั้งหมด';
+        if (filters.dateRange === 'today') dateStr = 'เฉพาะวันนี้';
+        else if (filters.dateRange === 'this_month') dateStr = 'เฉพาะเดือนนี้';
+        else if (filters.dateRange !== 'all') {
+          if (filters.dateRange.includes('_')) {
+             const parts = filters.dateRange.split('_');
+             const startParts = parts[0].split('-');
+             const endParts = parts[1].split('-');
+             if (startParts.length === 3 && endParts.length === 3) {
+               dateStr = `${startParts[2]}-${startParts[1]}-${parseInt(startParts[0], 10) + 543}_ถึง_${endParts[2]}-${endParts[1]}-${parseInt(endParts[0], 10) + 543}`;
+             } else {
+               dateStr = filters.dateRange;
+             }
+          } else {
+             const parts = filters.dateRange.split('-');
+             if (parts.length === 3) dateStr = `${parts[2]}-${parts[1]}-${parseInt(parts[0], 10) + 543}`;
+             else dateStr = filters.dateRange;
+          }
+        }
+
+        let pdfFilename = 'รายงาน';
+        if (formatStr) {
+            pdfFilename += '_' + formatStr;
+            pdfFilename += '_' + dateStr;
+        } else {
+            pdfFilename += dateStr === 'ข้อมูลทั้งหมด' ? 'ข้อมูลทั้งหมด' : '_' + dateStr;
+        }
+        pdfFilename += '.pdf';
+
+        const opt = {
+          margin: 15,
+          filename: pdfFilename,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+          pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' }
+        };
+
+        Swal.fire({
+          title: 'กำลังสร้างไฟล์ PDF...',
+          html: 'กรุณารอสักครู่ ระบบกำลังจัดรูปแบบเอกสารและประมวลผล',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
+        html2pdf().set(opt).from(fullHtml).save().then(() => {
+          Swal.close();
         });
       }
 
@@ -2283,6 +3355,8 @@
           return;
         }
 
+        window.lastDashboardData = res;
+
         // อัปเดตตัวเลข
         const counts = res.counts;
         document.getElementById('statTotal').innerText = res.total;
@@ -2298,21 +3372,36 @@
         let totalCommentsCount = 0;
 
         if (res.staffData && Object.keys(res.staffData).length > 0) {
-          // เรียงลำดับชื่อเจ้าหน้าที่อีกครั้งที่หน้าเว็บ เพื่อป้องกันชื่อที่เกิดใหม่ไปต่อท้าย
-          const sortedStaffNames = Object.keys(res.staffData).sort((a, b) => a.localeCompare(b, 'th', { numeric: true, sensitivity: 'base' }));
+          // เรียงชื่อพนักงานตามลำดับเคาท์เตอร์ (ถ้าไม่มีเคาท์เตอร์ให้เรียงตามตัวอักษร)
+          const sortedStaffNames = Object.keys(res.staffData).sort((a, b) => {
+            const staffA = res.staffData[a];
+            const staffB = res.staffData[b];
+            const numA = parseInt(staffA.id, 10);
+            const numB = parseInt(staffB.id, 10);
+            if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB;
+            const counterA = staffA.counter || "";
+            const counterB = staffB.counter || "";
+            if (counterA !== counterB) return counterA.localeCompare(counterB, 'th', { numeric: true, sensitivity: 'base' });
+            return a.localeCompare(b, 'th', { numeric: true, sensitivity: 'base' });
+          });
 
           for (let i = 0; i < sortedStaffNames.length; i++) {
             let staffName = sortedStaffNames[i];
             const data = res.staffData[staffName];
 
             const safeName = escapeHtml(staffName);
+            const displayName = data.counter && data.counter.trim() !== "" ? safeName + " - " + escapeHtml(data.counter) : safeName;
+
+            const avatarHtml = data.imageUrl ?
+              `<img src="${data.imageUrl}" alt="${safeName}" style="width: 2rem; height: 2rem; border-radius: 50%; object-fit: cover; margin-right: 0.5rem; border: 2px solid #3b82f6;">` :
+              `<i class="fas fa-user-circle" style="color: #3b82f6; font-size: 1.5rem; margin-right: 0.5rem;"></i>`;
 
             // 1. สร้างการ์ดแสดงรายบุคคล (เฉพาะคะแนน)
             const cardHtml = `
-            <div class="staff-card">
-              <div class="staff-header">
-                <i class="fas fa-user-circle" style="color: #ffb6c1; font-size: 1.5rem;"></i>
-                ${safeName}
+            <div class="staff-card" onclick="showStaffDetails('${staffName.replace(/'/g, "\\'")}')" style="cursor: pointer;">
+              <div class="staff-header" style="display: flex; align-items: center;">
+                ${avatarHtml}
+                <span>${displayName}</span>
               </div>
               <div class="staff-stats">
                 <div class="staff-stat-item" style="color: #388E3C; background: #E8F5E9;">😄 ${data.excellent}</div>
@@ -2349,14 +3438,14 @@
                   else { badgeClass = 'badge-neutral'; badgeText = 'ทั่วไป'; }
 
                   chunkHtml += `
-                  <div style="background: ${bgColor}; border-left: 4px solid ${borderColor}; padding: 12px 15px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                  <div style="background: ${bgColor}; border-left: 4px solid ${borderColor}; padding: 12px 15px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); width: 100%; box-sizing: border-box;">
                     <div style="display: flex; gap: 12px; align-items: flex-start;">
                       <div style="font-size: 1.6rem; line-height: 1; margin-top: 2px;">${emoji}</div>
-                      <div style="flex: 1;">
+                      <div style="flex: 1; min-width: 0;">
                         <div style="margin-bottom: 4px;">
                           <span class="sentiment-badge ${badgeClass}">${badgeText}</span>
                         </div>
-                        <div style="color: #444; font-size: 0.95rem; line-height: 1.5; margin-bottom: 6px;">"${escapeHtml(c.text)}"</div>
+                        <div style="color: #444; font-size: 0.95rem; line-height: 1.5; margin-bottom: 6px; word-break: break-word; overflow-wrap: break-word; white-space: normal;">"${escapeHtml(c.text)}"</div>
                         <div style="color: ${textColor}; font-size: 0.85rem; font-weight: 600; text-align: right;">— ${escapeHtml(c.evaluator)}</div>
                       </div>
                     </div>
@@ -2365,7 +3454,7 @@
                 });
 
                 commentsHtml += `
-                <div style="flex: 0 0 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; scroll-snap-align: start;">
+                <div style="flex: 0 0 100%; max-width: 100%; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; scroll-snap-align: start;">
                   ${chunkHtml}
                 </div>
               `;
@@ -2374,9 +3463,9 @@
               // ใช้ลำดับที่แทนชื่อ เพื่อให้ id ปลอดภัยเสมอไม่ว่าชื่อจะมีอักขระอะไร
               let safeId = 'scroll-' + i;
               const commentCardHtml = `
-              <div class="staff-card" style="height: 100%; margin-bottom: 0; display: flex; flex-direction: column;">
+              <div class="staff-card" style="height: 100%; margin-bottom: 0; display: flex; flex-direction: column; min-width: 0; max-width: 100%;">
                 <div class="staff-header" style="font-size: 1.1rem; border-bottom: 2px dashed #ffe4e1; padding-bottom: 12px; margin-bottom: 15px;">
-                  <i class="fas fa-comment-dots" style="color: #ffb6c1; font-size: 1.3rem;"></i>
+                  <i class="fas fa-comment-dots" style="color: #3b82f6; font-size: 1.3rem;"></i>
                   ความคิดเห็นที่มีต่อ: <span style="color: #ff8da1; margin-left: 5px;">${safeName}</span>
                 </div>
                 
@@ -2411,11 +3500,98 @@
 
         // วาดกราฟ
         renderChart(counts['3'], counts['2'], counts['1']);
+        if (res.trendData) {
+          renderTrendChart(res.trendData);
+        }
 
         if (window.pendingPrint) {
           window.pendingPrint = false;
-          setTimeout(() => { window.print(); }, 800);
+          setTimeout(() => {
+            preparePrintWrapper();
+            window.print();
+          }, 800);
         }
+
+        if (window.pendingPdf) {
+          window.pendingPdf = false;
+          setTimeout(() => { downloadPDF(); }, 800);
+        }
+
+        // เริ่มระบบ Auto-refresh ข้อมูลทุก 6 วินาที เบื้องหลัง
+        if (!window.autoRefreshInterval) {
+          window.autoRefreshInterval = setInterval(() => {
+            // โหลดข้อมูลเบื้องหลังเฉพาะตอนที่เปิดหน้าเว็บทิ้งไว้และล็อคอินอยู่
+            if (sessionToken && document.visibilityState === 'visible') {
+              loadDashboardData(true);
+            }
+          }, 6000);
+        }
+      }
+
+      function showStaffDetails(name) {
+        if (!window.lastDashboardData || !window.lastDashboardData.staffData || !window.lastDashboardData.staffData[name]) return;
+        const data = window.lastDashboardData.staffData[name];
+
+        const safeName = escapeHtml(name);
+        const avatarHtml = data.imageUrl ?
+          `<img src="${data.imageUrl}" alt="${safeName}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto 15px auto; display: block; border: 4px solid #3b82f6; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">` :
+          `<i class="fas fa-user-circle" style="color: #3b82f6; font-size: 6rem; margin-bottom: 15px; display: block; text-align: center;"></i>`;
+
+        let commentsHtml = '';
+        if (data.comments && data.comments.length > 0) {
+          commentsHtml = `<div style="max-height: 300px; overflow-y: auto; text-align: left; margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px; padding-right: 5px;">`;
+          data.comments.forEach(c => {
+            let emoji = c.rating == 3 ? '😄' : (c.rating == 2 ? '😐' : '😞');
+            let color = c.rating == 3 ? '#388E3C' : (c.rating == 2 ? '#F57C00' : '#D32F2F');
+            let bg = c.rating == 3 ? '#E8F5E9' : (c.rating == 2 ? '#FFF3E0' : '#FFEBEE');
+            commentsHtml += `
+              <div style="background: ${bg}; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid ${color};">
+                <div style="font-weight: bold; color: ${color}; margin-bottom: 4px; font-size: 0.95rem; word-break: break-word; overflow-wrap: break-word; white-space: normal;">${emoji} ${escapeHtml(c.text)}</div>
+                <div style="font-size: 0.8rem; color: #64748b; display: flex; justify-content: space-between;">
+                  <span><i class="fas fa-user-edit" style="margin-right:4px;"></i>${escapeHtml(c.evaluator)}</span>
+                </div>
+              </div>
+            `;
+          });
+          commentsHtml += `</div>`;
+        } else {
+          commentsHtml = `<div style="margin-top: 20px; color: #94a3b8; font-style: italic; text-align: center; padding: 20px; background: #f8fafc; border-radius: 8px;">ยังไม่มีความคิดเห็นเพิ่มเติม</div>`;
+        }
+
+        Swal.fire({
+          customClass: { popup: 'swal-wide' }, title: `<div style="font-size: 1.5rem; font-weight: bold; color: #1e293b; margin-top: 10px;">${safeName}</div>`,
+          html: `
+            ${avatarHtml}
+            <div style="display: flex; justify-content: space-around; background: linear-gradient(145deg, #ffffff, #f1f5f9); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+              <div style="text-align: center; width: 30%;">
+                <div style="font-size: 1.8rem; font-weight: bold; color: #388E3C;">${data.excellent}</div>
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 500;">😄 ดีมาก</div>
+              </div>
+              <div style="border-right: 1px solid #cbd5e1;"></div>
+              <div style="text-align: center; width: 30%;">
+                <div style="font-size: 1.8rem; font-weight: bold; color: #F57C00;">${data.good}</div>
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 500;">😐 ปานกลาง</div>
+              </div>
+              <div style="border-right: 1px solid #cbd5e1;"></div>
+              <div style="text-align: center; width: 30%;">
+                <div style="font-size: 1.8rem; font-weight: bold; color: #D32F2F;">${data.poor}</div>
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 500;">😞 ปรับปรุง</div>
+              </div>
+            </div>
+            ${commentsHtml}
+            <div style="text-align: center; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+              <button onclick="downloadSinglePDF('${safeName.replace(/'/g, "\\'")}')" style="background: linear-gradient(135deg, #0ea5e9, #38bdf8); color: white; border: none; padding: 10px 20px; border-radius: 12px; font-family: 'Kanit', sans-serif; font-size: 1rem; cursor: pointer; font-weight: 600; box-shadow: 0 4px 6px rgba(14, 165, 233, 0.2);">
+                <i class="fas fa-print"></i> ปริ้นต์รายงานคนนี้
+              </button>
+            </div>
+          `,
+          showCloseButton: true,
+          showConfirmButton: false,
+          width: '500px',
+          padding: '2em',
+          background: '#ffffff',
+          backdrop: 'rgba(15, 23, 42, 0.4)',
+        });
       }
 
       function renderChart(excellent, good, poor) {
@@ -2490,8 +3666,218 @@
         });
       }
 
+      function renderTrendChart(trendData) {
+        const container = document.getElementById('trendDataContainer');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        if (!trendData || !trendData.labels || trendData.labels.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: #a1a1aa; padding: 20px;">ไม่มีข้อมูล</div>';
+          return;
+        }
+
+        let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+
+        for (let i = 0; i < trendData.labels.length; i++) {
+          const label = trendData.labels[i];
+          const e = trendData.excellent[i] || 0;
+          const g = trendData.good[i] || 0;
+          const p = trendData.poor[i] || 0;
+          const total = e + g + p;
+
+          let pctE = 0, pctG = 0, pctP = 0;
+          if (total > 0) {
+            pctE = ((e / total) * 100).toFixed(1);
+            pctG = ((g / total) * 100).toFixed(1);
+            pctP = ((p / total) * 100).toFixed(1);
+          }
+
+          let staffHtml = '';
+          const dailyStaff = trendData.staff ? trendData.staff[i] : null;
+          if (dailyStaff && Object.keys(dailyStaff).length > 0) {
+            staffHtml += `<div id="trend-details-${i}" style="display: none; margin-top: 12px; border-top: 1px dashed #cbd5e1; padding-top: 12px; width: 100%;">`;
+            for (const staffName in dailyStaff) {
+              const s = dailyStaff[staffName];
+              let pE = 0, pG = 0, pP = 0;
+              if (total > 0) {
+                pE = ((s.excellent / total) * 100).toFixed(1);
+                pG = ((s.good / total) * 100).toFixed(1);
+                pP = ((s.poor / total) * 100).toFixed(1);
+              }
+              staffHtml += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f8fafc;">
+                  <div style="font-size: 0.9rem; color: #475569; font-weight: 500;"><i class="fas fa-user-circle" style="color: #94a3b8; margin-right: 6px;"></i> ${staffName}</div>
+                  <div style="font-size: 0.85rem; display: flex; gap: 12px;">
+                    <span style="color: #4CAF50; font-weight: 500;">ดีมาก ${s.excellent || 0} (${pE}%)</span>
+                    <span style="color: #d97706; font-weight: 500;">ดี ${s.good || 0} (${pG}%)</span>
+                    <span style="color: #F44336; font-weight: 500;">น้อย ${s.poor || 0} (${pP}%)</span>
+                  </div>
+                </div>
+              `;
+            }
+            staffHtml += `</div>`;
+          }
+
+          html += `
+            <div onclick="const d = document.getElementById('trend-details-${i}'); if(d) d.style.display = d.style.display === 'none' ? 'block' : 'none';" style="cursor: pointer; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s; display: flex; flex-direction: column;">
+              <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; width: 100%;">
+                <div style="font-weight: 600; color: #1e293b; min-width: 100px; display: flex; align-items: center; gap: 10px;">
+                  <div><i class="far fa-calendar-alt" style="color: #3b82f6; margin-right: 6px;"></i>${label}</div>
+                  <div style="font-size: 0.8rem; color: #64748b; background: #f1f5f9; padding: 2px 10px; border-radius: 20px;">
+                    ประเมิน ${total} คน <i class="fas fa-chevron-down" style="font-size: 0.7rem; margin-left: 4px;"></i>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap; font-size: 0.95rem;">
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #4CAF50; font-weight: 500;">ดีมาก:</span> <span style="font-weight: 600;">${e} (${pctE}%)</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #d97706; font-weight: 500;">ดี:</span> <span style="font-weight: 600;">${g} (${pctG}%)</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #F44336; font-weight: 500;">น้อย:</span> <span style="font-weight: 600;">${p} (${pctP}%)</span>
+                  </div>
+                </div>
+              </div>
+              ${staffHtml}
+            </div>
+          `;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+      }
+
+      function filterStaffByName() {
+        const input = document.getElementById('staffSearchInput');
+        if (!input) return;
+        const filter = input.value.toLowerCase();
+        const container = document.getElementById('staffDetailsContainer');
+        const cards = container.getElementsByClassName('staff-card');
+
+        for (let i = 0; i < cards.length; i++) {
+          const nameSpan = cards[i].querySelector('.staff-header span');
+          if (nameSpan) {
+            const txtValue = nameSpan.textContent || nameSpan.innerText;
+            if (txtValue.toLowerCase().indexOf(filter) > -1) {
+              cards[i].style.display = "";
+            } else {
+              cards[i].style.display = "none";
+            }
+          }
+        }
+      }
+
+      function downloadSinglePDF(staffName) {
+        if (!window.lastDashboardData || !window.lastDashboardData.staffData || !window.lastDashboardData.staffData[staffName]) return;
+        const data = window.lastDashboardData.staffData[staffName];
+
+        const dateSelect = document.getElementById('dateFilterSelect');
+        const dateText = dateSelect ? dateSelect.options[dateSelect.selectedIndex].text : 'ข้อมูลทั้งหมด';
+
+        let html = `
+          <div id="reportContainer" style="font-family: 'Sarabun', 'Kanit', sans-serif; background: white; color: #000; line-height: 1.5; padding: 15mm;">
+            <!-- Header -->
+            <div style="text-align: center; margin-bottom: 8mm; border-bottom: 2px solid #333; padding-bottom: 5mm;">
+              <img src="https://i.ibb.co/WpF86bhw/Logo-50-Year.png" alt="Logo" style="height: 25mm; object-fit: contain; margin-bottom: 4mm;">
+              <h1 style="margin: 0 0 5mm 0; font-size: 20pt; font-weight: bold;">รายงานสรุปผลการประเมินรายบุคคล</h1>
+              <p style="margin: 2mm 0; font-size: 14pt;"><strong>เจ้าหน้าที่:</strong> ${escapeHtml(staffName)}</p>
+              <p style="margin: 2mm 0; font-size: 12pt;"><strong>ช่วงเวลา:</strong> ${dateText}</p>
+            </div>
+
+            <!-- Stats -->
+            <div style="margin-bottom: 10mm;">
+              <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14pt;">
+                <thead>
+                  <tr style="background: #f0f0f0;">
+                    <th style="padding: 4mm; border: 1px solid #333;">รวมประเมิน</th>
+                    <th style="padding: 4mm; border: 1px solid #333;">ดีมาก</th>
+                    <th style="padding: 4mm; border: 1px solid #333;">ดี</th>
+                    <th style="padding: 4mm; border: 1px solid #333;">น้อย</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="padding: 4mm; border: 1px solid #333; font-weight: bold;">${(data.excellent || 0) + (data.good || 0) + (data.poor || 0)} ครั้ง</td>
+                    <td style="padding: 4mm; border: 1px solid #333;">${data.excellent || 0}</td>
+                    <td style="padding: 4mm; border: 1px solid #333;">${data.good || 0}</td>
+                    <td style="padding: 4mm; border: 1px solid #333;">${data.poor || 0}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+        `;
+
+        if (data.comments && data.comments.length > 0) {
+          html += `
+            <div>
+              <h2 style="font-size: 14pt; margin-bottom: 4mm; border-left: 4px solid #333; padding-left: 2mm;">ความคิดเห็นเพิ่มเติม:</h2>
+              <ul style="margin: 0; padding-left: 6mm; font-size: 12pt;">
+          `;
+          data.comments.forEach(c => {
+            let ratingLabel = '';
+            if (c.rating === 3) ratingLabel = '[ดีมาก]';
+            else if (c.rating === 2) ratingLabel = '[ดี]';
+            else if (c.rating === 1) ratingLabel = '[น้อย]';
+
+            html += `<li style="margin-bottom: 2mm;">${ratingLabel} "${escapeHtml(c.text)}" <span style="color: #555;">— ${escapeHtml(c.evaluator)}</span></li>`;
+          });
+          html += `</ul></div>`;
+        } else {
+          html += `<div style="font-size: 12pt; color: #777; font-style: italic; text-align: center;">ไม่มีความคิดเห็นเพิ่มเติมในช่วงเวลานี้</div>`;
+        }
+
+        html += `</div>`;
+
+        const fullHtml = `
+          <html>
+            <head>
+              <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+            </head>
+            <body style="margin:0; padding:0;">
+              ${html}
+            </body>
+          </html>
+        `;
+
+
+        // Measure content height for a single-page PDF
+        const measureDiv = document.createElement('div');
+        measureDiv.style.position = 'absolute';
+        measureDiv.style.left = '-9999px';
+        measureDiv.style.width = '1122px'; // A4 landscape width in pixels
+        measureDiv.innerHTML = html;
+        document.body.appendChild(measureDiv);
+
+        const pxHeight = measureDiv.scrollHeight;
+        const mmHeight = (pxHeight * 25.4) / 96;
+        document.body.removeChild(measureDiv);
+
+        const finalHeight = Math.max(210, mmHeight + 40);
+
+
+        const opt = {
+          margin: 15,
+          filename: 'รายงานของ_' + staffName + '.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+          pagebreak: { mode: 'css', avoid: 'tr' }
+        };
+
+        Swal.fire({
+          title: 'กำลังสร้างไฟล์ PDF...',
+          html: 'ระบบกำลังจัดรูปแบบเอกสารเฉพาะบุคคล',
+          allowOutsideClick: false,
+          didOpen: () => { Swal.showLoading(); }
+        });
+
+        html2pdf().set(opt).from(fullHtml).save().then(() => { Swal.close(); });
+      }
+
       // ===== Admin Management Functions =====
       let adminStaffData = [];
+      let filteredAdminStaffData = [];
       let adminWebAppUrl = '';
       let isAdminStaffListLoaded = false;
       let isAdminStaffListLoading = false;
@@ -2508,25 +3894,56 @@
         renderAdminGrid();
       }
 
+      function updateAdminDeptFilter() {
+        const filter = document.getElementById('adminDeptFilter');
+        const selectedVal = filter.value;
+        filter.innerHTML = '<option value="">ทุกแผนก</option>';
+        const depts = new Set();
+        adminStaffData.forEach(function (s) {
+          if (s.department && s.department.trim()) depts.add(s.department.trim());
+        });
+        Array.from(depts).sort().forEach(function (d) {
+          const opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          if (d === selectedVal) opt.selected = true;
+          filter.appendChild(opt);
+        });
+      }
+
+      function filterAdminStaff() {
+        const searchText = document.getElementById('adminSearchInput').value.toLowerCase();
+        const deptFilter = document.getElementById('adminDeptFilter').value;
+
+        filteredAdminStaffData = adminStaffData.filter(function (s) {
+          const matchName = !searchText || (s.name && s.name.toLowerCase().includes(searchText));
+          const matchDept = !deptFilter || (s.department && s.department.trim() === deptFilter);
+          return matchName && matchDept;
+        });
+        renderAdminGrid();
+      }
+
       function preloadAdminStaffList() {
         if (isAdminStaffListLoaded || isAdminStaffListLoading) return;
         isAdminStaffListLoading = true;
-        fetchAPI('getStaffListForAdmin', { token: sessionToken })
+        callGasApi('verifyLogin', { username: user, password: pass })
           .then(function (res) {
             isAdminStaffListLoading = false;
             if (res && res.success) {
               adminStaffData = res.staffList || [];
+              updateAdminDeptFilter();
+              filteredAdminStaffData = adminStaffData.slice();
               adminWebAppUrl = res.webAppUrl || '';
               isAdminStaffListLoaded = true;
-              // ถ้าย้ายมาหน้าแอดมินแล้วให้เรนเดอร์เลย
               if (document.getElementById('adminView').style.display === 'block') {
                 renderAdminGrid();
               }
             }
           })
-          .catch(function (err) {
+          .withFailureHandler(function (err) {
             isAdminStaffListLoading = false;
-          });
+          })
+          .getStaffListForAdmin(sessionToken);
       }
 
       function showAdminView() {
@@ -2537,7 +3954,11 @@
 
       function hideAdminView() {
         document.getElementById('adminView').style.display = 'none';
-        document.getElementById('dashboardView').style.display = 'flex';
+        const dash = document.getElementById('dashboardView');
+        dash.style.display = 'flex';
+        dash.classList.remove('animate-enter');
+        void dash.offsetWidth;
+        dash.classList.add('animate-enter');
       }
 
       function loadAdminStaffList() {
@@ -2561,7 +3982,12 @@
           grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
         }
 
-        adminStaffData.forEach(function (staff) {
+        if (filteredAdminStaffData.length === 0) {
+          grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #a1a1aa;"><i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i><p>ไม่พบรายชื่อที่ค้นหา</p></div>';
+          return;
+        }
+
+        filteredAdminStaffData.forEach(function (staff) {
           const hasImage = staff.imageUrl && staff.imageUrl.trim() !== '';
           const avatarHtml = hasImage
             ? '<img src="' + encodeURI(staff.imageUrl.trim()) + '" style="width: 100%; height: 100%; object-fit: cover;">'
@@ -2690,8 +4116,7 @@
         const needsDelete = isImageDeleted && (!fileInput.files || !fileInput.files[0]);
 
         // บันทึกชื่อ + ฝ่าย
-        fetchAPI('updateStaffData', { token: sessionToken, staffId: staffId, newName: name, department: dept, deleteImage: needsDelete })
-          .then(function (res) {
+        callGasApi('updateStaffData', { sessionToken: sessionToken, staffId: staffId, name: name, department: dept, deleteImage: needsDelete }).then(function(res) {
             if (res && res.authRequired) {
               btn.innerHTML = '<i class="fas fa-save"></i> บันทึก';
               btn.disabled = false;
@@ -2699,19 +4124,17 @@
               return;
             }
             if (res.success) {
-              // อัปเดต adminStaffData
               const staff = adminStaffData.find(function (s) { return s.id === staffId; });
               if (staff) {
                 staff.name = name;
                 staff.department = dept;
                 if (needsDelete) staff.imageUrl = '';
               }
-
-              // ถ้ามีไฟล์รูปภาพ ให้อัปโหลดต่อ
               if (fileInput.files && fileInput.files[0]) {
                 uploadImage(staffId, fileInput.files[0], btn);
               } else {
-                renderAdminGrid();
+                updateAdminDeptFilter();
+                filterAdminStaff();
                 btn.innerHTML = '<i class="fas fa-save"></i> บันทึก';
                 btn.disabled = false;
                 Swal.fire({ icon: 'success', title: 'บันทึกเรียบร้อย', timer: 1500, showConfirmButton: false });
@@ -2721,8 +4144,7 @@
               btn.disabled = false;
               Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: res.message, confirmButtonColor: '#667eea' });
             }
-          })
-          .catch(function (err) {
+          }).catch(function(err) {
             btn.innerHTML = '<i class="fas fa-save"></i> บันทึก';
             btn.disabled = false;
             Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.message, confirmButtonColor: '#667eea' });
@@ -2741,17 +4163,16 @@
         const reader = new FileReader();
         reader.onload = function (e) {
           const base64 = e.target.result;
-          fetchAPI('uploadStaffImage', { token: sessionToken, staffId: staffId, base64Data: base64, fileName: file.name })
+          callGasApi('uploadStaffImage', { sessionToken: sessionToken, staffId: staffId, base64Data: base64, fileName: file.name })
             .then(function (res) {
               btn.innerHTML = '<i class="fas fa-save"></i> บันทึก';
               btn.disabled = false;
               if (res && res.authRequired) { handleAuthExpired(res.message); return; }
               if (res.success) {
-                // อัปเดต adminStaffData
                 const staff = adminStaffData.find(function (s) { return s.id === staffId; });
                 if (staff) staff.imageUrl = res.imageUrl;
-                // อัปเดตการ์ดทั้งหมด
-                renderAdminGrid();
+                updateAdminDeptFilter();
+                filterAdminStaff();
                 Swal.fire({ icon: 'success', title: 'บันทึกข้อมูลและรูปภาพเรียบร้อย', timer: 1500, showConfirmButton: false });
               } else {
                 Swal.fire({ icon: 'warning', title: 'บันทึกข้อมูลแล้ว แต่รูปภาพมีปัญหา', text: res.message, confirmButtonColor: '#667eea' });
@@ -2761,7 +4182,8 @@
               btn.innerHTML = '<i class="fas fa-save"></i> บันทึก';
               btn.disabled = false;
               Swal.fire({ icon: 'warning', title: 'บันทึกข้อมูลแล้ว แต่อัปโหลดรูปไม่สำเร็จ', text: err.message, confirmButtonColor: '#667eea' });
-            });
+            })
+            .uploadStaffImage(sessionToken, staffId, base64, file.name);
         };
         reader.readAsDataURL(file);
       }
@@ -2895,6 +4317,24 @@
         }
       }
     </script>
+
+    <!-- สัญลักษณ์โหลดข้อมูลเบื้องหลัง (ซ้ายล่าง) -->
+    <div id="silentLoadingIndicator"
+      style="display: none; position: fixed; bottom: 30px; left: 30px; z-index: 9999; background: white; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: #667eea; width: 40px; height: 40px; justify-content: center; align-items: center; border: 2px solid #e0e7ff;">
+      <i class="fas fa-circle-notch fa-spin" style="font-size: 1.2rem;"></i>
+    </div>
+
+    <!-- ปุ่มเลื่อนขึ้นบนสุดและลงล่างสุด (ย้ายออกมานอก container) -->
+    <div class="scroll-btn-group">
+      <button class="scroll-btn" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" title="เลื่อนขึ้นบนสุด">
+        <i class="fas fa-chevron-up"></i>
+      </button>
+      <button class="scroll-btn" onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })"
+        title="เลื่อนลงล่างสุด">
+        <i class="fas fa-chevron-down"></i>
+      </button>
+    </div>
 </body>
 
 </html>
+
