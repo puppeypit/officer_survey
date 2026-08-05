@@ -59,7 +59,17 @@ var allStaffData = [];
   let currentLineUid = "";
   let currentLineName = "";
 
+  let serverStaffId = "";
+  let serverIsAdmin = "false";
+  let scanTime = "";
+
   window.addEventListener('load', () => {
+    const sd = document.getElementById('serverData');
+    if (sd) {
+      serverStaffId = sd.getAttribute('data-staff-id') || "";
+      serverIsAdmin = sd.getAttribute('data-is-admin') || "false";
+      scanTime = sd.getAttribute('data-scan-time') || "";
+    }
     startAppLogic();
   });
 
