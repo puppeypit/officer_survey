@@ -3926,7 +3926,7 @@
       function preloadAdminStaffList() {
         if (isAdminStaffListLoaded || isAdminStaffListLoading) return;
         isAdminStaffListLoading = true;
-        callGasApi('verifyLogin', { username: user, password: pass })
+        callGasApi('getStaffListForAdmin', { sessionToken: sessionToken })
           .then(function (res) {
             isAdminStaffListLoading = false;
             if (res && res.success) {
@@ -3940,10 +3940,10 @@
               }
             }
           })
-          .withFailureHandler(function (err) {
+          .catch(function (err) {
             isAdminStaffListLoading = false;
-          })
-          .getStaffListForAdmin(sessionToken);
+            console.error('preloadAdminStaffList error:', err);
+          });
       }
 
       function showAdminView() {
