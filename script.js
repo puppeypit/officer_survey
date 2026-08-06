@@ -5,7 +5,7 @@ async function callGasApi(action, payload) {
     const response = await fetch(GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: action, ...payload })
+      body: JSON.stringify({ action: action, data: payload, ...payload })
     });
     return await response.json();
   } catch (error) {
