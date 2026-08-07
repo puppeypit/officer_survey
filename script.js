@@ -117,7 +117,7 @@ var allStaffData = [];
                 } else {
                   // ยังไม่เคยลงทะเบียน
                   // วิ่งไปที่หน้าลงทะเบียนตัวเดิมของระบบ
-                  window.location.href = "https://liff.line.me/2010640180-E85OIlZ4?returnUrl=" + encodeURIComponent(window.location.href);
+                  window.location.href = "https://liff.line.me/2009229714-1R09rohG?returnUrl=" + encodeURIComponent(window.location.href);
                 }
               })
               .catch(err => {
