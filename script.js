@@ -116,8 +116,8 @@ var allStaffData = [];
                   loadStaffDataToEvaluate();
                 } else {
                   // ยังไม่เคยลงทะเบียน
-                  // วิ่งไปที่หน้าลงทะเบียนตัวเดิมของระบบ
-                  window.location.href = "https://liff.line.me/2009229714-1R09rohG?returnUrl=" + encodeURIComponent(window.location.href);
+                  // วิ่งไปที่หน้าลงทะเบียน
+                  window.location.href = "https://liff.line.me/2009229714-weBHiK8i?returnUrl=" + encodeURIComponent(window.location.href);
                 }
               })
               .catch(err => {
@@ -530,7 +530,53 @@ var allStaffData = [];
     }
   }
 
+  // เปิดหน้าต่างใหม่ไปที่ LIFF ลงทะเบียน
+  window.openExternalRegistration = function() {
+    // ใช้ LIFF 1R09rohG ตามที่คุณลูกค้าต้องการ
+    const url = "https://liff.line.me/2009229714-1R09rohG";
+    if (liff.isInClient()) {
+      liff.openWindow({ url: url, external: false });
+    } else {
+      window.open(url, '_blank');
+    }
+  };
 
+  // ตรวจสอบว่าลงทะเบียนสำเร็จหรือยัง
+  window.checkRegistrationStatus = function() {
+    var btnCheck = document.getElementById('btnCheckRegistration');
+    btnCheck.classList.add('loading');
+    btnCheck.disabled = true;
+
+    callGasApi('verifyLineUser', { lineUid: currentLineUid })
+      .then(res => {
+        btnCheck.classList.remove('loading');
+        btnCheck.disabled = false;
+
+        if (res.success) {
+          currentLineName = res.memberData.name;
+          Swal.fire({
+            icon: 'success',
+            title: 'พบข้อมูลการลงทะเบียน!',
+            text: 'ยินดีต้อนรับ ' + currentLineName,
+            showConfirmButton: false,
+            timer: 1500
+          });
+          loadStaffDataToEvaluate();
+        } else {
+          Swal.fire({
+            icon: 'warning',
+            title: 'ยังไม่พบข้อมูล',
+            text: 'กรุณากดปุ่มเปิดหน้าลงทะเบียน และทำรายการให้เสร็จสิ้นก่อน',
+            confirmButtonColor: 'var(--warning-color)'
+          });
+        }
+      })
+      .catch(err => {
+        btnCheck.classList.remove('loading');
+        btnCheck.disabled = false;
+        alert('เกิดข้อผิดพลาดในการตรวจสอบ: ' + err);
+      });
+  }
 
   /**
    * ล้างฟอร์ม
