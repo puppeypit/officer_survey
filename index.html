@@ -211,30 +211,22 @@
     <!-- 4. หน้าจอลงทะเบียน (Register View) กรณีใช้ LIFF แล้วยังไม่ได้ลงทะเบียน -->
     <div id="view-register" class="view-section" style="padding-top: 5vh;">
       <div class="card" style="border-top: 5px solid var(--primary);">
-        <h2 style="color: var(--primary-dark); margin-bottom: 1rem; text-align: center;">ลงทะเบียนเข้าใช้งาน</h2>
+        <h2 style="color: var(--primary-dark); margin-bottom: 1rem; text-align: center;">ยังไม่ได้ลงทะเบียน</h2>
         <p style="text-align: center; color: var(--text-muted); margin-bottom: 1.5rem;">
-          กรุณากรอกข้อมูลส่วนตัวเพื่อเริ่มต้นการประเมิน
+          คุณต้องลงทะเบียนก่อนจึงจะสามารถทำรายการประเมินได้
         </p>
         
-        <div class="form-group">
-          <label for="regName">ชื่อ-นามสกุล <span style="color: red;">*</span></label>
-          <div class="input-icon-wrapper">
-            <i class="fas fa-user input-icon"></i>
-            <input type="text" id="regName" class="form-control" placeholder="กรอกชื่อ-นามสกุล" required>
-          </div>
+        <div style="background: rgba(102, 126, 234, 0.1); border-radius: 12px; padding: 15px; margin-bottom: 20px; text-align: center;">
+          <p style="font-size: 14px; margin-bottom: 10px;">กรุณากดปุ่มด้านล่างเพื่อเปิดหน้าต่างลงทะเบียน</p>
+          <button class="btn" style="width: 100%; margin-bottom: 10px;" onclick="openExternalRegistration()">
+            <i class="fas fa-external-link-alt"></i> เปิดหน้าลงทะเบียน
+          </button>
+          <p style="font-size: 12px; color: var(--text-muted);">เมื่อลงทะเบียนเสร็จแล้ว ให้กดกากบาทปิดหน้าต่างนั้น เพื่อกลับมาหน้านี้</p>
         </div>
 
-        <div class="form-group">
-          <label for="regPhone">เบอร์โทรศัพท์ <span style="color: red;">*</span></label>
-          <div class="input-icon-wrapper">
-            <i class="fas fa-phone input-icon"></i>
-            <input type="tel" id="regPhone" class="form-control" placeholder="กรอกเบอร์โทรศัพท์" required>
-          </div>
-        </div>
-
-        <button id="btnSubmitRegister" class="btn" onclick="submitRegistration()">
+        <button id="btnCheckRegistration" class="btn" onclick="checkRegistrationStatus()" style="background-color: var(--success-color);">
           <span class="spinner"></span>
-          <span class="btn-text"><i class="fas fa-user-check"></i> ลงทะเบียน</span>
+          <span class="btn-text"><i class="fas fa-check-circle"></i> ฉันลงทะเบียนเสร็จแล้ว</span>
         </button>
       </div>
     </div>

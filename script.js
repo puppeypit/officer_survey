@@ -1,4 +1,4 @@
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbx1heL3rvXJFhnz6MHNNBfKXbaP8xEBPqj54BS2-v-Worx8rDKZYeLxqAc7a4ZKsLyf/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw-wFPhxBOEbXMrilUcFQnCYLxYZNsueWGg8KvRIqPHbqF85yph5TKzwcGH_diTxoTE/exec';
 
 async function callGasApi(action, payload) {
   try {
@@ -115,8 +115,12 @@ var allStaffData = [];
                   currentLineName = res.memberData.name;
                   loadStaffDataToEvaluate();
                 } else {
-                  // ยังไม่เคยลงทะเบียน
-                  // วิ่งไปที่หน้าลงทะเบียน
+                  // เช็คว่ามี Error จาก GAS หรือไม่ (ป้องกันลูป)
+                  if (res.message && res.message !== 'ยังไม่ได้ลงทะเบียน') {
+                      alert('พบข้อผิดพลาดจากระบบฐานข้อมูล: ' + res.message);
+                      return; // หยุดทำงาน ไม่ต้องเด้งไปหน้าลงทะเบียน
+                  }
+                  // ยังไม่เคยลงทะเบียน -> วิ่งไปที่หน้าลงทะเบียน
                   window.location.href = "https://liff.line.me/2009229714-weBHiK8i?returnUrl=" + encodeURIComponent(window.location.href);
                 }
               })
